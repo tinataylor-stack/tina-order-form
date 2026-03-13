@@ -4,6 +4,8 @@ import { uploadSignature } from "@/lib/uploadSignature";
 
 export async function POST(request: Request) {
   try {
+    console.log("submit-form: started");
+
     const body = await request.json();
 
     const {
@@ -50,8 +52,12 @@ export async function POST(request: Request) {
     let signatureUrl: string | null = null;
 
     if (signatureData) {
+      console.log("submit-form: uploading signature");
       signatureUrl = await uploadSignature(signatureData);
+      console.log("submit-form: signature uploaded", signatureUrl);
     }
+
+    console.log("submit-form: inserting into supabase");
 
     const { error } = await supabase.from("form_submissions").insert([
       {
@@ -84,19 +90,18 @@ export async function POST(request: Request) {
     ]);
 
     if (error) {
-      console.error("Supabase insert error:", error);
+      console.error("submit-form: supabase insert error", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    console.log("submit-form: success");
 
     return NextResponse.json({
       success: true,
       message: "ส่งข้อมูลเรียบร้อยแล้ว",
     });
   } catch (error) {
-    console.error("API route error:", error);
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
+    console.error("submit-form: route error", error);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
