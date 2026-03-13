@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import AdminSubmissionsList from "./AdminSubmissionsList";
 
@@ -41,34 +43,21 @@ export default async function AdminPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 p-6 md:p-10">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              รายการคำสั่งซื้อ / แบบฟอร์ม
-            </h1>
-            <p className="mt-2 text-gray-600">
-              ดูข้อมูลทั้งหมดแบบพับเก็บได้ พร้อมแยกคนที่ต้องการใบกำกับภาษี
-            </p>
-          </div>
-
-          <form action="/api/admin-logout" method="POST">
-            <button
-              type="submit"
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              ออกจากระบบ
-            </button>
-          </form>
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">รายการคำสั่งซื้อ / แบบฟอร์ม</h1>
+          <p className="text-gray-600 mt-2">
+            ดูข้อมูลทั้งหมดแบบพับเก็บได้ พร้อมแยกคนที่ต้องการใบกำกับภาษี
+          </p>
         </div>
 
-        {error ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+        {error && (
+          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
             Error: {error.message}
           </div>
-        ) : (
-          <AdminSubmissionsList submissions={submissions} />
         )}
+
+        {!error && <AdminSubmissionsList submissions={submissions} />}
       </div>
     </main>
   );
