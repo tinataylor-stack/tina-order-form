@@ -7,8 +7,10 @@ import SignatureCanvas from "react-signature-canvas";
 
 export default function FormPage() {
   const router = useRouter();
+  const sigCanvasRef = useRef<SignatureCanvas | null>(null);
 
   const [step, setStep] = useState(1);
+  const totalSteps = 8;
 
   const [course, setCourse] = useState("");
 
@@ -47,14 +49,10 @@ export default function FormPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const sigCanvasRef = useRef<SignatureCanvas | null>(null);
-
   const isBusinessOwner = occupation === "business-owner";
   const needsInvoice = wantsInvoice === "yes";
   const isPersonalInvoice = invoiceType === "personal";
   const isCompanyInvoice = invoiceType === "company";
-
-  const totalSteps = 8;
 
   const validateEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -270,21 +268,48 @@ export default function FormPage() {
     }
   };
 
-  return (
-    <main className="min-h-screen p-10">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">แบบฟอร์มลงทะเบียน</h1>
-        <p className="text-gray-600 mb-6">
-          หน้า {step} จาก {totalSteps}
-        </p>
+  const radioCardClass = (checked: boolean) =>
+    `flex items-start gap-3 rounded-xl border p-4 cursor-pointer transition ${
+      checked
+        ? "border-black bg-gray-50"
+        : "border-gray-300 bg-white hover:border-gray-400"
+    }`;
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+  return (
+    <main className="min-h-screen bg-gray-50 px-4 py-8 md:px-6 md:py-10">
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            แบบฟอร์มลงทะเบียน
+          </h1>
+          <div className="mt-3">
+            <div className="mb-2 flex items-center justify-between text-sm text-gray-500">
+              <span>
+                หน้า {step} จาก {totalSteps}
+              </span>
+              <span>{Math.round((step / totalSteps) * 100)}%</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+              <div
+                className="h-full rounded-full bg-black transition-all duration-300"
+                style={{ width: `${(step / totalSteps) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-200 md:p-8">
           {step === 1 && (
-            <div>
-              <label className="block mb-3 font-medium">คอร์สที่สั่งซื้อ</label>
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">เลือกคอร์สที่สั่งซื้อ</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  กรุณาเลือกสินค้าที่ต้องการลงทะเบียน
+                </p>
+              </div>
 
               <div className="space-y-3">
-                <label className="flex items-start gap-3 border border-gray-300 rounded-md p-3 cursor-pointer">
+                <label className={radioCardClass(course === "คอร์ส Quick Content")}>
                   <input
                     type="radio"
                     name="course"
@@ -293,10 +318,10 @@ export default function FormPage() {
                     onChange={(e) => setCourse(e.target.value)}
                     className="mt-1"
                   />
-                  <span>คอร์ส Quick Content</span>
+                  <span className="font-medium text-gray-900">คอร์ส Quick Content</span>
                 </label>
 
-                <label className="flex items-start gap-3 border border-gray-300 rounded-md p-3 cursor-pointer">
+                <label className={radioCardClass(course === "คอร์ส 9+1 ขายดีจัดเต็ม!")}>
                   <input
                     type="radio"
                     name="course"
@@ -305,10 +330,10 @@ export default function FormPage() {
                     onChange={(e) => setCourse(e.target.value)}
                     className="mt-1"
                   />
-                  <span>คอร์ส 9+1 ขายดีจัดเต็ม!</span>
+                  <span className="font-medium text-gray-900">คอร์ส 9+1 ขายดีจัดเต็ม!</span>
                 </label>
 
-                <label className="flex items-start gap-3 border border-gray-300 rounded-md p-3 cursor-pointer">
+                <label className={radioCardClass(course === "Ebook Ai สำหรับเด็ก")}>
                   <input
                     type="radio"
                     name="course"
@@ -317,28 +342,39 @@ export default function FormPage() {
                     onChange={(e) => setCourse(e.target.value)}
                     className="mt-1"
                   />
-                  <span>Ebook Ai สำหรับเด็ก</span>
+                  <span className="font-medium text-gray-900">Ebook Ai สำหรับเด็ก</span>
                 </label>
               </div>
             </div>
           )}
 
           {step === 2 && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">ข้อมูลผู้สั่งซื้อ</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  กรอกข้อมูลติดต่อสำหรับการลงทะเบียน
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block mb-1">ชื่อผู้รับสินค้า</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    ชื่อผู้รับสินค้า
+                  </label>
                   <input
-                    className="w-full border border-gray-300 rounded-md p-2"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-1">นามสกุล</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    นามสกุล
+                  </label>
                   <input
-                    className="w-full border border-gray-300 rounded-md p-2"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                   />
@@ -346,20 +382,20 @@ export default function FormPage() {
               </div>
 
               <div>
-                <label className="block mb-1">ชื่อเล่น</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">ชื่อเล่น</label>
                 <input
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">อีเมล</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">อีเมล</label>
                 <input
                   type="email"
                   inputMode="email"
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="example@email.com"
@@ -367,11 +403,11 @@ export default function FormPage() {
               </div>
 
               <div>
-                <label className="block mb-1">เบอร์โทร</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">เบอร์โทร</label>
                 <input
                   type="tel"
                   inputMode="numeric"
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={phone}
                   onChange={(e) => {
                     const digitsOnly = e.target.value.replace(/\D/g, "");
@@ -386,12 +422,19 @@ export default function FormPage() {
           {step === 3 && (
             <div className="space-y-6">
               <div>
-                <label className="block mb-3 font-medium">
+                <h2 className="text-xl font-semibold text-gray-900">ข้อมูลเพิ่มเติม</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  แจ้งรายละเอียดการชำระเงิน วันเกิด และอาชีพ
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-3 block text-sm font-medium text-gray-700">
                   ชำระเงินผ่านช่องทางใด
                 </label>
 
                 <div className="space-y-3">
-                  <label className="flex items-start gap-3 border border-gray-300 rounded-md p-3 cursor-pointer">
+                  <label className={radioCardClass(paymentMethod === "โอนผ่านบัญชีธนาคาร")}>
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -400,10 +443,10 @@ export default function FormPage() {
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="mt-1"
                     />
-                    <span>โอนผ่านบัญชีธนาคาร</span>
+                    <span className="font-medium text-gray-900">โอนผ่านบัญชีธนาคาร</span>
                   </label>
 
-                  <label className="flex items-start gap-3 border border-gray-300 rounded-md p-3 cursor-pointer">
+                  <label className={radioCardClass(paymentMethod === "ตัดบัตร")}>
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -412,10 +455,10 @@ export default function FormPage() {
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="mt-1"
                     />
-                    <span>ตัดบัตร</span>
+                    <span className="font-medium text-gray-900">ตัดบัตร</span>
                   </label>
 
-                  <label className="flex items-start gap-3 border border-gray-300 rounded-md p-3 cursor-pointer">
+                  <label className={radioCardClass(paymentMethod === "other")}>
                     <input
                       type="radio"
                       name="paymentMethod"
@@ -425,10 +468,10 @@ export default function FormPage() {
                       className="mt-1"
                     />
                     <div className="w-full">
-                      <div>อื่น ๆ โปรดระบุ</div>
+                      <div className="font-medium text-gray-900">อื่น ๆ โปรดระบุ</div>
                       {paymentMethod === "other" && (
                         <input
-                          className="w-full border border-gray-300 rounded-md p-2 mt-2"
+                          className="mt-3 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                           value={otherPaymentMethod}
                           onChange={(e) => setOtherPaymentMethod(e.target.value)}
                           placeholder="กรุณาระบุ"
@@ -442,10 +485,10 @@ export default function FormPage() {
               <BirthDatePicker value={birthDate} onChange={setBirthDate} />
 
               <div>
-                <label className="block mb-3 font-medium">อาชีพ</label>
+                <label className="mb-3 block text-sm font-medium text-gray-700">อาชีพ</label>
 
                 <div className="space-y-3">
-                  <label className="flex items-start gap-3 border border-gray-300 rounded-md p-3 cursor-pointer">
+                  <label className={radioCardClass(occupation === "business-owner")}>
                     <input
                       type="radio"
                       name="occupation"
@@ -454,10 +497,12 @@ export default function FormPage() {
                       onChange={(e) => setOccupation(e.target.value)}
                       className="mt-1"
                     />
-                    <span>เจ้าของกิจการ / พ่อค้าแม่ค้าออนไลน์</span>
+                    <span className="font-medium text-gray-900">
+                      เจ้าของกิจการ / พ่อค้าแม่ค้าออนไลน์
+                    </span>
                   </label>
 
-                  <label className="flex items-start gap-3 border border-gray-300 rounded-md p-3 cursor-pointer">
+                  <label className={radioCardClass(occupation === "other")}>
                     <input
                       type="radio"
                       name="occupation"
@@ -467,10 +512,10 @@ export default function FormPage() {
                       className="mt-1"
                     />
                     <div className="w-full">
-                      <div>อื่น ๆ โปรดระบุ</div>
+                      <div className="font-medium text-gray-900">อื่น ๆ โปรดระบุ</div>
                       {occupation === "other" && (
                         <input
-                          className="w-full border border-gray-300 rounded-md p-2 mt-2"
+                          className="mt-3 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                           value={otherOccupation}
                           onChange={(e) => setOtherOccupation(e.target.value)}
                           placeholder="กรุณาระบุ"
@@ -484,27 +529,39 @@ export default function FormPage() {
           )}
 
           {step === 4 && isBusinessOwner && (
-            <div>
-              <label className="block mb-1 font-medium">
-                บรรยายสิ่งที่ธุรกิจคุณทำมา 1 - 3 ประโยค
-              </label>
-              <textarea
-                className="w-full border border-gray-300 rounded-md p-2 min-h-[150px]"
-                value={businessDescription}
-                onChange={(e) => setBusinessDescription(e.target.value)}
-                placeholder="ตัวอย่าง : ธุรกิจของเราช่วยให้หมอฟันได้ลูกค้าเพิ่มขึ้นผ่านการยิงแอด คิดค่าบริการเดือนละ 60,000 บาท/เดือน"
-              />
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">ข้อมูลธุรกิจ</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  สำหรับผู้ที่เป็นเจ้าของกิจการ
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  บรรยายสิ่งที่ธุรกิจคุณทำมา 1 - 3 ประโยค
+                </label>
+                <textarea
+                  className="min-h-[160px] w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
+                  value={businessDescription}
+                  onChange={(e) => setBusinessDescription(e.target.value)}
+                  placeholder="ตัวอย่าง : ธุรกิจของเราช่วยให้หมอฟันได้ลูกค้าเพิ่มขึ้นผ่านการยิงแอด คิดค่าบริการเดือนละ 60,000 บาท/เดือน"
+                />
+              </div>
             </div>
           )}
 
           {step === 5 && (
-            <div>
-              <label className="block mb-3 font-medium">
-                ต้องการใบกำกับภาษีหรือไม่
-              </label>
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">ใบกำกับภาษี</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  เลือกว่าคุณต้องการใบกำกับภาษีหรือไม่
+                </p>
+              </div>
 
               <div className="space-y-3">
-                <label className="flex items-start gap-3 border border-gray-300 rounded-md p-3 cursor-pointer">
+                <label className={radioCardClass(wantsInvoice === "yes")}>
                   <input
                     type="radio"
                     name="wantsInvoice"
@@ -513,10 +570,10 @@ export default function FormPage() {
                     onChange={(e) => setWantsInvoice(e.target.value)}
                     className="mt-1"
                   />
-                  <span>ต้องการ</span>
+                  <span className="font-medium text-gray-900">ต้องการ</span>
                 </label>
 
-                <label className="flex items-start gap-3 border border-gray-300 rounded-md p-3 cursor-pointer">
+                <label className={radioCardClass(wantsInvoice === "no")}>
                   <input
                     type="radio"
                     name="wantsInvoice"
@@ -525,20 +582,23 @@ export default function FormPage() {
                     onChange={(e) => setWantsInvoice(e.target.value)}
                     className="mt-1"
                   />
-                  <span>ไม่ต้องการ</span>
+                  <span className="font-medium text-gray-900">ไม่ต้องการ</span>
                 </label>
               </div>
             </div>
           )}
 
           {step === 6 && needsInvoice && (
-            <div>
-              <label className="block mb-3 font-medium">
-                ออกใบกำกับภาษีในนาม
-              </label>
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">ประเภทใบกำกับภาษี</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  ระบุว่าต้องการออกในนามบุคคลธรรมดาหรือนิติบุคคล
+                </p>
+              </div>
 
               <div className="space-y-3">
-                <label className="flex items-start gap-3 border border-gray-300 rounded-md p-3 cursor-pointer">
+                <label className={radioCardClass(invoiceType === "personal")}>
                   <input
                     type="radio"
                     name="invoiceType"
@@ -547,10 +607,10 @@ export default function FormPage() {
                     onChange={(e) => setInvoiceType(e.target.value)}
                     className="mt-1"
                   />
-                  <span>บุคคลธรรมดา</span>
+                  <span className="font-medium text-gray-900">บุคคลธรรมดา</span>
                 </label>
 
-                <label className="flex items-start gap-3 border border-gray-300 rounded-md p-3 cursor-pointer">
+                <label className={radioCardClass(invoiceType === "company")}>
                   <input
                     type="radio"
                     name="invoiceType"
@@ -559,48 +619,57 @@ export default function FormPage() {
                     onChange={(e) => setInvoiceType(e.target.value)}
                     className="mt-1"
                   />
-                  <span>นิติบุคคล</span>
+                  <span className="font-medium text-gray-900">นิติบุคคล</span>
                 </label>
               </div>
             </div>
           )}
 
           {step === 7 && needsInvoice && isPersonalInvoice && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block mb-1">ชื่อสำหรับออกใบกำกับภาษี</label>
+                <h2 className="text-xl font-semibold text-gray-900">ข้อมูลใบกำกับภาษี</h2>
+                <p className="mt-1 text-sm text-gray-500">สำหรับบุคคลธรรมดา</p>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  ชื่อสำหรับออกใบกำกับภาษี
+                </label>
                 <input
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={personalTaxName}
                   onChange={(e) => setPersonalTaxName(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">เลขประจำตัวผู้เสียภาษี</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  เลขประจำตัวผู้เสียภาษี
+                </label>
                 <input
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={personalTaxId}
                   onChange={(e) => setPersonalTaxId(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">ที่อยู่</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">ที่อยู่</label>
                 <textarea
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={personalAddress}
                   onChange={(e) => setPersonalAddress(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
                   อีเมลสำหรับจัดส่งใบกำกับภาษีผ่านระบบ e-Tax
                 </label>
                 <input
                   type="email"
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={personalInvoiceEmail}
                   onChange={(e) => setPersonalInvoiceEmail(e.target.value)}
                 />
@@ -609,63 +678,76 @@ export default function FormPage() {
           )}
 
           {step === 7 && needsInvoice && isCompanyInvoice && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block mb-1">ชื่อบริษัท</label>
+                <h2 className="text-xl font-semibold text-gray-900">ข้อมูลใบกำกับภาษี</h2>
+                <p className="mt-1 text-sm text-gray-500">สำหรับนิติบุคคล</p>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  ชื่อบริษัท
+                </label>
                 <input
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">เลขประจำตัวผู้เสียภาษี</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  เลขประจำตัวผู้เสียภาษี
+                </label>
                 <input
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={companyTaxId}
                   onChange={(e) => setCompanyTaxId(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">ที่อยู่บริษัท</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  ที่อยู่บริษัท
+                </label>
                 <textarea
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={companyAddress}
                   onChange={(e) => setCompanyAddress(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
                   อีเมลสำหรับจัดส่งใบกำกับภาษีผ่านระบบ e-Tax
                 </label>
                 <input
                   type="email"
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={companyInvoiceEmail}
                   onChange={(e) => setCompanyInvoiceEmail(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
                   ชื่อผู้ติดต่อ สำหรับใบกำกับภาษีและใบหัก ณ ที่จ่าย
                 </label>
                 <input
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={companyContactName}
                   onChange={(e) => setCompanyContactName(e.target.value)}
                 />
               </div>
 
               <div>
-                <label className="block mb-1">เบอร์โทรศัพท์</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  เบอร์โทรศัพท์
+                </label>
                 <input
                   type="tel"
                   inputMode="numeric"
-                  className="w-full border border-gray-300 rounded-md p-2"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
                   value={companyContactPhone}
                   onChange={(e) => {
                     const digitsOnly = e.target.value.replace(/\D/g, "");
@@ -677,53 +759,80 @@ export default function FormPage() {
           )}
 
           {step === 8 && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div>
-                <label className="flex items-start gap-2">
+                <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
+                  ยืนยันข้อมูล
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  เซ็นชื่อและยอมรับเงื่อนไขก่อนส่งแบบฟอร์ม
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                <label className="flex cursor-pointer items-start gap-3">
                   <input
                     type="checkbox"
                     checked={acceptedTerms}
                     onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="mt-1"
+                    className="mt-1 h-5 w-5 rounded border-gray-300"
                   />
-                  <span>ยอมรับเงื่อนไขและข้อตกลงการให้บริการ</span>
+
+                  <div className="text-sm leading-6 text-gray-700">
+                    ฉันยอมรับ{" "}
+                    <a
+                      href="https://www.tina-academy.com/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-black underline underline-offset-2"
+                    >
+                      เงื่อนไขและข้อตกลงการให้บริการ
+                    </a>
+                  </div>
                 </label>
               </div>
 
-              <div>
-                <label className="block mb-2 font-medium">ลายเซ็น</label>
+              <div className="rounded-2xl border border-gray-200 bg-white p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <label className="block font-medium text-gray-900">ลายเซ็น</label>
+                    <p className="text-sm text-gray-500">เซ็นในกรอบด้านล่าง</p>
+                  </div>
 
-                <div className="border border-gray-300 rounded-md bg-white p-3">
+                  <button
+                    type="button"
+                    onClick={clearSignature}
+                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50"
+                  >
+                    Clear
+                  </button>
+                </div>
+
+                <div className="overflow-hidden rounded-xl border border-gray-300 bg-white">
                   <SignatureCanvas
                     ref={sigCanvasRef}
                     penColor="black"
                     canvasProps={{
                       width: 700,
                       height: 220,
-                      className: "w-full h-[220px]",
+                      className: "h-[220px] w-full",
                     }}
                   />
                 </div>
 
-                <div className="flex gap-3 mt-3">
-                  <button
-                    type="button"
-                    onClick={clearSignature}
-                    className="px-4 py-2 border border-gray-300 rounded-md"
-                  >
-                    Clear
-                  </button>
-                </div>
+                <p className="mt-3 text-xs text-gray-500">
+                  การกดยืนยันถือว่าคุณรับทราบรายละเอียดและยืนยันความถูกต้องของข้อมูลที่กรอก
+                </p>
               </div>
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             {step > 1 && (
               <button
                 type="button"
                 onClick={handlePrev}
-                className="px-4 py-2 border border-gray-300 rounded-md"
+                className="rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 ย้อนกลับ
               </button>
@@ -733,7 +842,7 @@ export default function FormPage() {
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-4 py-2 bg-black text-white rounded-md"
+                className="rounded-xl bg-black px-5 py-3 font-medium text-white transition hover:opacity-90"
               >
                 ถัดไป
               </button>
@@ -743,14 +852,18 @@ export default function FormPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 bg-black text-white rounded-md"
+                className="rounded-xl bg-black px-5 py-3 font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "กำลังส่ง..." : "ยืนยันข้อมูล"}
+                {loading ? "กำลังส่ง..." : "ยืนยันและส่งข้อมูล"}
               </button>
             )}
           </div>
 
-          {message && <p className="text-sm text-gray-700">{message}</p>}
+          {message && (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {message}
+            </div>
+          )}
         </form>
       </div>
     </main>

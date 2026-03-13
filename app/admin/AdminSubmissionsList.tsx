@@ -1,0 +1,427 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import type { Submission } from "./page";
+
+function InfoRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number | boolean | null | undefined;
+}) {
+  const displayValue =
+    value === null || value === undefined || value === ""
+      ? "-"
+      : typeof value === "boolean"
+      ? value
+        ? "ใช่"
+        : "ไม่ใช่"
+      : String(value);
+
+  return (
+    <div className="grid grid-cols-1 gap-1 border-b border-gray-100 py-2 last:border-b-0 md:grid-cols-[220px_1fr] md:gap-4">
+      <div className="text-sm text-gray-500">{label}</div>
+      <div className="break-words whitespace-pre-wrap text-sm text-gray-900">
+        {displayValue}
+      </div>
+    </div>
+  );
+}
+
+function Badge({
+  children,
+  tone = "gray",
+}: {
+  children: React.ReactNode;
+  tone?: "gray" | "green" | "yellow" | "red" | "blue";
+}) {
+  const toneClass =
+    tone === "green"
+      ? "bg-green-100 text-green-800 border-green-200"
+      : tone === "yellow"
+      ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+      : tone === "red"
+      ? "bg-red-100 text-red-800 border-red-200"
+      : tone === "blue"
+      ? "bg-blue-100 text-blue-800 border-blue-200"
+      : "bg-gray-100 text-gray-700 border-gray-200";
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${toneClass}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function formatInvoiceType(invoiceType: string | null) {
+  if (invoiceType === "personal") return "บุคคลธรรมดา";
+  if (invoiceType === "company") return "นิติบุคคล";
+  return "-";
+}
+
+type AdminTab = "all" | "invoice" | "hidden";
+
+export default function AdminSubmissionsList({
+  submissions,
+}: {
+  submissions: Submission[];
+}) {
+  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<AdminTab>("all");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("hiddenSubmissionIds");
+    if (saved) {
+      try {
+        setHiddenIds(JSON.parse(saved));
+      } catch {
+        setHiddenIds([]);
+      }
+    }
+  }, []);
+
+  const saveHiddenIds = (next: string[]) => {
+    setHiddenIds(next);
+    localStorage.setItem("hiddenSubmissionIds", JSON.stringify(next));
+  };
+
+  const hideSubmission = (id: string) => {
+    if (hiddenIds.includes(id)) return;
+    saveHiddenIds([...hiddenIds, id]);
+  };
+
+  const unhideSubmission = (id: string) => {
+    const next = hiddenIds.filter((hiddenId) => hiddenId !== id);
+    saveHiddenIds(next);
+  };
+
+  const visibleSubmissions = useMemo(() => {
+    if (activeTab === "hidden") {
+      return submissions.filter((submission) => hiddenIds.includes(submission.id));
+    }
+
+    let filtered = submissions.filter(
+      (submission) => !hiddenIds.includes(submission.id)
+    );
+
+    if (activeTab === "invoice") {
+      filtered = filtered.filter(
+        (submission) => submission.wants_invoice === true
+      );
+    }
+
+    return filtered;
+  }, [submissions, hiddenIds, activeTab]);
+
+  const invoiceCount = submissions.filter(
+    (submission) => submission.wants_invoice === true
+  ).length;
+  const hiddenCount = hiddenIds.length;
+  const activeCount = submissions.length - hiddenCount;
+
+  if (!submissions.length) {
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white p-6">
+        ยังไม่มีข้อมูลส่งเข้ามา
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone="blue">แสดงอยู่ {activeCount} รายการ</Badge>
+            <Badge tone="green">ต้องการใบกำกับภาษี {invoiceCount} รายการ</Badge>
+            <Badge tone="gray">ซ่อนแล้ว {hiddenCount} รายการ</Badge>
+            <Badge tone="gray">ทั้งหมด {submissions.length} รายการ</Badge>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("all")}
+              className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                activeTab === "all"
+                  ? "border-black bg-black text-white"
+                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              ทั้งหมด
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("invoice")}
+              className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                activeTab === "invoice"
+                  ? "border-black bg-black text-white"
+                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              เฉพาะคนที่ขอใบกำกับภาษี
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("hidden")}
+              className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
+                activeTab === "hidden"
+                  ? "border-black bg-black text-white"
+                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              รายการที่ซ่อน
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {!visibleSubmissions.length ? (
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 text-gray-600">
+          {activeTab === "hidden"
+            ? "ยังไม่มีรายการที่ถูกซ่อน"
+            : "ไม่มีรายการที่ต้องแสดง"}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {visibleSubmissions.map((submission, index) => {
+            const fullName =
+              [submission.first_name, submission.last_name]
+                .filter(Boolean)
+                .join(" ")
+                .trim() || submission.name || "-";
+
+            const summaryLine = [
+              submission.nickname ? `ชื่อเล่น: ${submission.nickname}` : null,
+              submission.course ? `คอร์ส: ${submission.course}` : null,
+              submission.phone ? `โทร: ${submission.phone}` : null,
+            ]
+              .filter(Boolean)
+              .join(" • ");
+
+            const isHiddenTab = activeTab === "hidden";
+
+            return (
+              <details
+                key={submission.id}
+                className="group overflow-hidden rounded-2xl border border-gray-200 bg-white"
+              >
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black text-sm text-white">
+                        {index + 1}
+                      </span>
+
+                      <h2 className="break-words text-lg font-semibold">
+                        {fullName}
+                      </h2>
+
+                      {submission.wants_invoice ? (
+                        <Badge tone="green">
+                          ต้องการใบกำกับภาษี
+                          {submission.invoice_type
+                            ? ` • ${formatInvoiceType(submission.invoice_type)}`
+                            : ""}
+                        </Badge>
+                      ) : null}
+
+                      {isHiddenTab ? <Badge tone="gray">ซ่อนอยู่</Badge> : null}
+                    </div>
+
+                    <div className="mt-2 break-words text-sm text-gray-600">
+                      {submission.email || "-"}
+                    </div>
+
+                    {summaryLine && (
+                      <div className="mt-1 break-words text-sm text-gray-500">
+                        {summaryLine}
+                      </div>
+                    )}
+
+                    <div className="mt-2 text-xs text-gray-400">
+                      ส่งเมื่อ:{" "}
+                      {submission.created_at
+                        ? new Date(submission.created_at).toLocaleString()
+                        : "-"}
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 pt-2 text-sm text-gray-500 transition-transform group-open:rotate-180">
+                    ▼
+                  </div>
+                </summary>
+
+                <div className="border-t border-gray-200 px-5 pb-5">
+                  <div className="flex justify-end pt-4">
+                    {isHiddenTab ? (
+                      <button
+                        type="button"
+                        onClick={() => unhideSubmission(submission.id)}
+                        className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 transition hover:bg-green-100"
+                      >
+                        เอากลับมา
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => hideSubmission(submission.id)}
+                        className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                      >
+                        ซ่อน
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="pt-4">
+                    <div className="mb-6">
+                      <h3 className="mb-3 font-semibold text-gray-900">
+                        ข้อมูลทั่วไป
+                      </h3>
+                      <div className="rounded-xl bg-gray-50 p-4">
+                        <InfoRow
+                          label="คอร์สที่สั่งซื้อ"
+                          value={submission.course}
+                        />
+                        <InfoRow
+                          label="ชื่อผู้รับสินค้า"
+                          value={submission.first_name}
+                        />
+                        <InfoRow
+                          label="นามสกุล"
+                          value={submission.last_name}
+                        />
+                        <InfoRow
+                          label="ชื่อเล่น"
+                          value={submission.nickname}
+                        />
+                        <InfoRow label="อีเมล" value={submission.email} />
+                        <InfoRow label="เบอร์โทร" value={submission.phone} />
+                        <InfoRow
+                          label="ชำระเงินผ่าน"
+                          value={submission.payment_method}
+                        />
+                        <InfoRow
+                          label="วัน/เดือน/ปีเกิด"
+                          value={submission.birth_date}
+                        />
+                        <InfoRow label="อาชีพ" value={submission.occupation} />
+                        <InfoRow
+                          label="ยอมรับเงื่อนไข"
+                          value={submission.accepted_terms}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <h3 className="mb-3 font-semibold text-gray-900">
+                        ข้อมูลธุรกิจ
+                      </h3>
+                      <div className="rounded-xl bg-gray-50 p-4">
+                        <InfoRow
+                          label="รายละเอียดธุรกิจ"
+                          value={submission.business_description}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <h3 className="mb-3 font-semibold text-gray-900">
+                        ข้อมูลใบกำกับภาษี
+                      </h3>
+                      <div className="rounded-xl bg-gray-50 p-4">
+                        <InfoRow
+                          label="ต้องการใบกำกับภาษี"
+                          value={submission.wants_invoice}
+                        />
+                        <InfoRow
+                          label="ประเภทใบกำกับภาษี"
+                          value={formatInvoiceType(submission.invoice_type)}
+                        />
+                        <InfoRow
+                          label="ชื่อสำหรับออกใบกำกับภาษี"
+                          value={submission.personal_tax_name}
+                        />
+                        <InfoRow
+                          label="เลขประจำตัวผู้เสียภาษี (บุคคลธรรมดา)"
+                          value={submission.personal_tax_id}
+                        />
+                        <InfoRow
+                          label="ที่อยู่ (บุคคลธรรมดา)"
+                          value={submission.personal_address}
+                        />
+                        <InfoRow
+                          label="อีเมล e-Tax (บุคคลธรรมดา)"
+                          value={submission.personal_invoice_email}
+                        />
+                        <InfoRow
+                          label="ชื่อบริษัท"
+                          value={submission.company_name}
+                        />
+                        <InfoRow
+                          label="เลขประจำตัวผู้เสียภาษี (บริษัท)"
+                          value={submission.company_tax_id}
+                        />
+                        <InfoRow
+                          label="ที่อยู่บริษัท"
+                          value={submission.company_address}
+                        />
+                        <InfoRow
+                          label="อีเมล e-Tax (บริษัท)"
+                          value={submission.company_invoice_email}
+                        />
+                        <InfoRow
+                          label="ชื่อผู้ติดต่อ"
+                          value={submission.company_contact_name}
+                        />
+                        <InfoRow
+                          label="เบอร์โทรผู้ติดต่อ"
+                          value={submission.company_contact_phone}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="mb-3 font-semibold text-gray-900">
+                        ลายเซ็น
+                      </h3>
+                      <div className="rounded-xl bg-gray-50 p-4">
+                        {submission.signature_url ? (
+                          <div className="space-y-3">
+                            <a
+                              href={submission.signature_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="break-all text-sm underline"
+                            >
+                              เปิดลิงก์ลายเซ็น
+                            </a>
+
+                            <img
+                              src={submission.signature_url}
+                              alt="Signature"
+                              className="max-w-full rounded-lg border border-gray-300 bg-white"
+                            />
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-500">
+                            ไม่มีลายเซ็น
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
