@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Submission } from "./page";
 
 function InfoRow({
@@ -38,14 +38,14 @@ function Badge({
 }) {
   const toneClass =
     tone === "green"
-      ? "bg-green-100 text-green-800 border-green-200"
+      ? "border-green-200 bg-green-100 text-green-800"
       : tone === "yellow"
-      ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+      ? "border-yellow-200 bg-yellow-100 text-yellow-800"
       : tone === "red"
-      ? "bg-red-100 text-red-800 border-red-200"
+      ? "border-red-200 bg-red-100 text-red-800"
       : tone === "blue"
-      ? "bg-blue-100 text-blue-800 border-blue-200"
-      : "bg-gray-100 text-gray-700 border-gray-200";
+      ? "border-blue-200 bg-blue-100 text-blue-800"
+      : "border-gray-200 bg-gray-100 text-gray-700";
 
   return (
     <span
@@ -62,6 +62,16 @@ function formatInvoiceType(invoiceType: string | null) {
   return "-";
 }
 
+function formatSubmittedAt(createdAt: string | null) {
+  if (!createdAt) return "-";
+
+  return new Date(createdAt).toLocaleString("th-TH", {
+    timeZone: "Asia/Bangkok",
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
 type AdminTab = "all" | "invoice" | "hidden";
 
 export default function AdminSubmissionsList({
@@ -69,58 +79,67 @@ export default function AdminSubmissionsList({
 }: {
   submissions: Submission[];
 }) {
-  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<AdminTab>("all");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("hiddenSubmissionIds");
-    if (saved) {
-      try {
-        setHiddenIds(JSON.parse(saved));
-      } catch {
-        setHiddenIds([]);
-      }
-    }
-  }, []);
-
-  const saveHiddenIds = (next: string[]) => {
-    setHiddenIds(next);
-    localStorage.setItem("hiddenSubmissionIds", JSON.stringify(next));
-  };
-
-  const hideSubmission = (id: string) => {
-    if (hiddenIds.includes(id)) return;
-    saveHiddenIds([...hiddenIds, id]);
-  };
-
-  const unhideSubmission = (id: string) => {
-    const next = hiddenIds.filter((hiddenId) => hiddenId !== id);
-    saveHiddenIds(next);
-  };
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const visibleSubmissions = useMemo(() => {
     if (activeTab === "hidden") {
-      return submissions.filter((submission) => hiddenIds.includes(submission.id));
+      return submissions.filter((submission) => submission.is_hidden_in_admin === true);
     }
 
     let filtered = submissions.filter(
-      (submission) => !hiddenIds.includes(submission.id)
+      (submission) => submission.is_hidden_in_admin !== true
     );
 
     if (activeTab === "invoice") {
-      filtered = filtered.filter(
-        (submission) => submission.wants_invoice === true
-      );
+      filtered = filtered.filter((submission) => submission.wants_invoice === true);
     }
 
     return filtered;
-  }, [submissions, hiddenIds, activeTab]);
+  }, [submissions, activeTab]);
 
   const invoiceCount = submissions.filter(
-    (submission) => submission.wants_invoice === true
+    (submission) =>
+      submission.wants_invoice === true && submission.is_hidden_in_admin !== true
   ).length;
-  const hiddenCount = hiddenIds.length;
-  const activeCount = submissions.length - hiddenCount;
+
+  const hiddenCount = submissions.filter(
+    (submission) => submission.is_hidden_in_admin === true
+  ).length;
+
+  const activeCount = submissions.filter(
+    (submission) => submission.is_hidden_in_admin !== true
+  ).length;
+
+  const toggleHidden = async (id: string, hidden: boolean) => {
+    try {
+      setLoadingId(id);
+
+      const res = await fetch("/api/admin-hide", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          hidden,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "เกิดข้อผิดพลาด");
+        return;
+      }
+
+      window.location.reload();
+    } catch {
+      alert("เกิดข้อผิดพลาด");
+    } finally {
+      setLoadingId(null);
+    }
+  };
 
   if (!submissions.length) {
     return (
@@ -205,6 +224,7 @@ export default function AdminSubmissionsList({
               .join(" • ");
 
             const isHiddenTab = activeTab === "hidden";
+            const isLoading = loadingId === submission.id;
 
             return (
               <details
@@ -245,10 +265,7 @@ export default function AdminSubmissionsList({
                     )}
 
                     <div className="mt-2 text-xs text-gray-400">
-                      ส่งเมื่อ:{" "}
-                      {submission.created_at
-                        ? new Date(submission.created_at).toLocaleString()
-                        : "-"}
+                      ส่งเมื่อ: {formatSubmittedAt(submission.created_at)}
                     </div>
                   </div>
 
@@ -262,18 +279,20 @@ export default function AdminSubmissionsList({
                     {isHiddenTab ? (
                       <button
                         type="button"
-                        onClick={() => unhideSubmission(submission.id)}
-                        className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 transition hover:bg-green-100"
+                        disabled={isLoading}
+                        onClick={() => toggleHidden(submission.id, false)}
+                        className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        เอากลับมา
+                        {isLoading ? "กำลังอัปเดต..." : "เอากลับมา"}
                       </button>
                     ) : (
                       <button
                         type="button"
-                        onClick={() => hideSubmission(submission.id)}
-                        className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                        disabled={isLoading}
+                        onClick={() => toggleHidden(submission.id, true)}
+                        className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        ซ่อน
+                        {isLoading ? "กำลังอัปเดต..." : "ซ่อน"}
                       </button>
                     )}
                   </div>
@@ -284,22 +303,13 @@ export default function AdminSubmissionsList({
                         ข้อมูลทั่วไป
                       </h3>
                       <div className="rounded-xl bg-gray-50 p-4">
-                        <InfoRow
-                          label="คอร์สที่สั่งซื้อ"
-                          value={submission.course}
-                        />
+                        <InfoRow label="คอร์สที่สั่งซื้อ" value={submission.course} />
                         <InfoRow
                           label="ชื่อผู้รับสินค้า"
                           value={submission.first_name}
                         />
-                        <InfoRow
-                          label="นามสกุล"
-                          value={submission.last_name}
-                        />
-                        <InfoRow
-                          label="ชื่อเล่น"
-                          value={submission.nickname}
-                        />
+                        <InfoRow label="นามสกุล" value={submission.last_name} />
+                        <InfoRow label="ชื่อเล่น" value={submission.nickname} />
                         <InfoRow label="อีเมล" value={submission.email} />
                         <InfoRow label="เบอร์โทร" value={submission.phone} />
                         <InfoRow
@@ -359,10 +369,7 @@ export default function AdminSubmissionsList({
                           label="อีเมล e-Tax (บุคคลธรรมดา)"
                           value={submission.personal_invoice_email}
                         />
-                        <InfoRow
-                          label="ชื่อบริษัท"
-                          value={submission.company_name}
-                        />
+                        <InfoRow label="ชื่อบริษัท" value={submission.company_name} />
                         <InfoRow
                           label="เลขประจำตัวผู้เสียภาษี (บริษัท)"
                           value={submission.company_tax_id}

@@ -31,6 +31,7 @@ export type Submission = {
   company_contact_phone: string | null;
   accepted_terms: boolean | null;
   signature_url: string | null;
+  is_hidden_in_admin: boolean | null;
 };
 
 export default async function AdminPage() {
