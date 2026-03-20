@@ -13,6 +13,7 @@ export default function FormPage() {
   const totalSteps = 8;
 
   const [course, setCourse] = useState("");
+  const [otherCourse, setOtherCourse] = useState("");
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -53,15 +54,24 @@ export default function FormPage() {
   const needsInvoice = wantsInvoice === "yes";
   const isPersonalInvoice = invoiceType === "personal";
   const isCompanyInvoice = invoiceType === "company";
+  const isOtherCourse = course === "other";
+  const finalCourse = isOtherCourse ? otherCourse.trim() : course;
 
   const validateEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
   const validateBeforeNext = () => {
-    if (step === 1 && !course) {
-      setMessage("กรุณาเลือกคอร์สที่สั่งซื้อ");
-      return false;
+    if (step === 1) {
+      if (!course) {
+        setMessage("กรุณาเลือกคอร์สที่สั่งซื้อ");
+        return false;
+      }
+
+      if (isOtherCourse && !otherCourse.trim()) {
+        setMessage("กรุณาระบุคอร์สหรือสินค้าที่สั่งซื้อ");
+        return false;
+      }
     }
 
     if (step === 2) {
@@ -223,7 +233,7 @@ export default function FormPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          course,
+          course: finalCourse,
           firstName,
           lastName,
           nickname,
@@ -343,6 +353,28 @@ export default function FormPage() {
                     className="mt-1"
                   />
                   <span className="font-medium text-gray-900">Ebook Ai สำหรับเด็ก</span>
+                </label>
+
+                <label className={radioCardClass(isOtherCourse)}>
+                  <input
+                    type="radio"
+                    name="course"
+                    value="other"
+                    checked={isOtherCourse}
+                    onChange={(e) => setCourse(e.target.value)}
+                    className="mt-1"
+                  />
+                  <div className="w-full">
+                    <div className="font-medium text-gray-900">อื่น ๆ โปรดระบุ</div>
+                    {isOtherCourse && (
+                      <input
+                        className="mt-3 w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
+                        value={otherCourse}
+                        onChange={(e) => setOtherCourse(e.target.value)}
+                        placeholder="กรุณาระบุคอร์สหรือสินค้า"
+                      />
+                    )}
+                  </div>
                 </label>
               </div>
             </div>

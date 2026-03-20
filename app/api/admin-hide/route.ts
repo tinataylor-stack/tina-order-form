@@ -1,8 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { hasValidAdminSession } from "@/lib/admin-session";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const hasAdminSession = await hasValidAdminSession(request);
+
+    if (!hasAdminSession) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { id, hidden } = body;
 

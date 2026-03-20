@@ -1,11 +1,11 @@
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function uploadSignature(base64: string) {
   const blob = await fetch(base64).then((res) => res.blob());
 
   const fileName = `signature-${Date.now()}.png`;
 
-  const { error } = await supabase.storage
+  const { error } = await supabaseAdmin.storage
     .from("signatures")
     .upload(fileName, blob, {
       contentType: "image/png",
@@ -15,7 +15,7 @@ export async function uploadSignature(base64: string) {
     throw error;
   }
 
-  const { data } = supabase.storage
+  const { data } = supabaseAdmin.storage
     .from("signatures")
     .getPublicUrl(fileName);
 

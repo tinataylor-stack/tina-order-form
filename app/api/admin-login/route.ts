@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import {
+  ADMIN_SESSION_COOKIE_NAME,
+  createAdminSessionToken,
+  getAdminSessionCookieOptions,
+} from "@/lib/admin-session";
 
 export async function POST(request: Request) {
   try {
@@ -28,14 +33,13 @@ export async function POST(request: Request) {
     }
 
     const response = NextResponse.json({ success: true });
+    const sessionToken = await createAdminSessionToken();
 
-    response.cookies.set("admin-auth", "granted", {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 8,
-    });
+    response.cookies.set(
+      ADMIN_SESSION_COOKIE_NAME,
+      sessionToken,
+      getAdminSessionCookieOptions()
+    );
 
     return response;
   } catch (error) {

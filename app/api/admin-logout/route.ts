@@ -1,18 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  ADMIN_SESSION_COOKIE_NAME,
+  getAdminSessionCookieOptions,
+} from "@/lib/admin-session";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const response = NextResponse.redirect(
     new URL("/admin-login", request.url),
     { status: 303 }
   );
 
-  response.cookies.set("admin-auth", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  });
+  response.cookies.set(
+    ADMIN_SESSION_COOKIE_NAME,
+    "",
+    getAdminSessionCookieOptions(true)
+  );
 
   return response;
 }
