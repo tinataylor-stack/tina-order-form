@@ -8,11 +8,21 @@ import SignatureCanvas from "react-signature-canvas";
 export default function FormPage() {
   const router = useRouter();
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
+  const startSmartCourseName = 'Start Smart | เริ่มให้ถูกทาง แบบคนที่ "รู้เกม"';
+  const startSmartTiers = [
+    "แบบวิเคราะห์ให้ 299 บาท",
+    "แบบเอาจริง 1,990 บาท",
+    "แบบใกล้ชิด 19,990 บาท",
+  ];
+  const quickContentCourseName = "คอร์ส Quick Content";
+  const quickContentTiers = ["แบบ Basic", "แบบ VIP"];
 
   const [step, setStep] = useState(1);
   const totalSteps = 8;
 
   const [course, setCourse] = useState("");
+  const [startSmartTier, setStartSmartTier] = useState("");
+  const [quickContentTier, setQuickContentTier] = useState("");
   const [otherCourse, setOtherCourse] = useState("");
 
   const [firstName, setFirstName] = useState("");
@@ -45,7 +55,6 @@ export default function FormPage() {
   const [companyContactPhone, setCompanyContactPhone] = useState("");
 
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [signatureData, setSignatureData] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -55,7 +64,31 @@ export default function FormPage() {
   const isPersonalInvoice = invoiceType === "personal";
   const isCompanyInvoice = invoiceType === "company";
   const isOtherCourse = course === "other";
-  const finalCourse = isOtherCourse ? otherCourse.trim() : course;
+  const isStartSmartSystem = course === startSmartCourseName;
+  const isQuickContent = course === quickContentCourseName;
+  const finalCourse = isOtherCourse
+    ? otherCourse.trim()
+    : isStartSmartSystem && startSmartTier
+      ? `${startSmartCourseName} - ${startSmartTier}`
+      : isQuickContent && quickContentTier
+        ? `${quickContentCourseName} - ${quickContentTier}`
+      : course;
+
+  const handleCourseChange = (value: string) => {
+    setCourse(value);
+
+    if (value !== startSmartCourseName) {
+      setStartSmartTier("");
+    }
+
+    if (value !== quickContentCourseName) {
+      setQuickContentTier("");
+    }
+
+    if (value !== "other") {
+      setOtherCourse("");
+    }
+  };
 
   const validateEmail = (value: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -70,6 +103,16 @@ export default function FormPage() {
 
       if (isOtherCourse && !otherCourse.trim()) {
         setMessage("กรุณาระบุคอร์สหรือสินค้าที่สั่งซื้อ");
+        return false;
+      }
+
+      if (isStartSmartSystem && !startSmartTier) {
+        setMessage("กรุณาเลือกระดับของ Start Smart System");
+        return false;
+      }
+
+      if (isQuickContent && !quickContentTier) {
+        setMessage("กรุณาเลือกระดับของคอร์ส Quick Content");
         return false;
       }
     }
@@ -204,7 +247,6 @@ export default function FormPage() {
 
   const clearSignature = () => {
     sigCanvasRef.current?.clear();
-    setSignatureData("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -221,7 +263,6 @@ export default function FormPage() {
     }
 
     const finalSignature = sigCanvasRef.current.toDataURL("image/png");
-    setSignatureData(finalSignature);
 
     setLoading(true);
     setMessage("");
@@ -271,8 +312,8 @@ export default function FormPage() {
       router.push(
         `/thank-you?nickname=${encodeURIComponent(nickname.trim() || "คนเก่ง")}`
       );
-    } catch (error: any) {
-      setMessage(error.message || "เกิดข้อผิดพลาด");
+    } catch (error: unknown) {
+      setMessage(error instanceof Error ? error.message : "เกิดข้อผิดพลาด");
     } finally {
       setLoading(false);
     }
@@ -319,28 +360,74 @@ export default function FormPage() {
               </div>
 
               <div className="space-y-3">
-                <label className={radioCardClass(course === "คอร์ส Quick Content")}>
+                <label className={radioCardClass(isStartSmartSystem)}>
                   <input
                     type="radio"
                     name="course"
-                    value="คอร์ส Quick Content"
-                    checked={course === "คอร์ส Quick Content"}
-                    onChange={(e) => setCourse(e.target.value)}
+                    value={startSmartCourseName}
+                    checked={isStartSmartSystem}
+                    onChange={(e) => handleCourseChange(e.target.value)}
                     className="mt-1"
                   />
-                  <span className="font-medium text-gray-900">คอร์ส Quick Content</span>
+                  <div className="w-full">
+                    <div className="font-medium text-gray-900">{startSmartCourseName}</div>
+                    {isStartSmartSystem && (
+                      <div className="mt-3 space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                        <p className="text-sm text-gray-600">เลือกระดับที่ต้องการ</p>
+                        {startSmartTiers.map((tier) => (
+                          <label
+                            key={tier}
+                            className={radioCardClass(startSmartTier === tier)}
+                          >
+                            <input
+                              type="radio"
+                              name="startSmartTier"
+                              value={tier}
+                              checked={startSmartTier === tier}
+                              onChange={(e) => setStartSmartTier(e.target.value)}
+                              className="mt-1"
+                            />
+                            <span className="font-medium text-gray-900">{tier}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </label>
 
-                <label className={radioCardClass(course === "คอร์ส 9+1 ขายดีจัดเต็ม!")}>
+                <label className={radioCardClass(isQuickContent)}>
                   <input
                     type="radio"
                     name="course"
-                    value="คอร์ส 9+1 ขายดีจัดเต็ม!"
-                    checked={course === "คอร์ส 9+1 ขายดีจัดเต็ม!"}
-                    onChange={(e) => setCourse(e.target.value)}
+                    value={quickContentCourseName}
+                    checked={isQuickContent}
+                    onChange={(e) => handleCourseChange(e.target.value)}
                     className="mt-1"
                   />
-                  <span className="font-medium text-gray-900">คอร์ส 9+1 ขายดีจัดเต็ม!</span>
+                  <div className="w-full">
+                    <div className="font-medium text-gray-900">{quickContentCourseName}</div>
+                    {isQuickContent && (
+                      <div className="mt-3 space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                        <p className="text-sm text-gray-600">เลือกระดับที่ต้องการ</p>
+                        {quickContentTiers.map((tier) => (
+                          <label
+                            key={tier}
+                            className={radioCardClass(quickContentTier === tier)}
+                          >
+                            <input
+                              type="radio"
+                              name="quickContentTier"
+                              value={tier}
+                              checked={quickContentTier === tier}
+                              onChange={(e) => setQuickContentTier(e.target.value)}
+                              className="mt-1"
+                            />
+                            <span className="font-medium text-gray-900">{tier}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </label>
 
                 <label className={radioCardClass(course === "Ebook Ai สำหรับเด็ก")}>
@@ -349,7 +436,7 @@ export default function FormPage() {
                     name="course"
                     value="Ebook Ai สำหรับเด็ก"
                     checked={course === "Ebook Ai สำหรับเด็ก"}
-                    onChange={(e) => setCourse(e.target.value)}
+                    onChange={(e) => handleCourseChange(e.target.value)}
                     className="mt-1"
                   />
                   <span className="font-medium text-gray-900">Ebook Ai สำหรับเด็ก</span>
@@ -361,7 +448,7 @@ export default function FormPage() {
                     name="course"
                     value="other"
                     checked={isOtherCourse}
-                    onChange={(e) => setCourse(e.target.value)}
+                    onChange={(e) => handleCourseChange(e.target.value)}
                     className="mt-1"
                   />
                   <div className="w-full">
