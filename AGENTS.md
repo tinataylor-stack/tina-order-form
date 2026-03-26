@@ -25,8 +25,10 @@ This repo is a Thai-language course registration and order intake app that:
 - Thank-you page at `/thank-you`
 - Admin login at `/admin-login`
 - Internal admin review page at `/admin`
+- Internal follow-up table page at `/admin/follow-up`
 - API routes under `/app/api`
 - Shared helpers under `/lib`
+- Shared admin submission type in `/app/admin/types.ts`
 
 ## Working Rules
 
@@ -40,6 +42,7 @@ This repo is a Thai-language course registration and order intake app that:
   - submit route
   - Supabase write shape
   - admin display
+- When changing course names, tiers, or prices on the first step in [app/form/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/form/page.tsx), do not change unrelated form logic.
 - Keep secrets server-side only. Never expose the service role key in client code.
 
 ## Architecture Rules
@@ -84,6 +87,12 @@ Applies to:
 - Do not hardcode secrets or private URLs.
 - Be careful with invoice-related data because it affects accounting workflows.
 - Be careful with signature handling because it affects both storage and admin review.
+- If `outbound_called`, `outbound_call_note`, or `disqualified` change, update all connected layers together:
+  - `/app/admin/AdminSubmissionsList.tsx`
+  - `/app/admin/follow-up/FollowUpTable.tsx`
+  - `/app/api/admin-follow-up/route.ts`
+  - Supabase schema or migration files
+- Hidden submissions should stay excluded from `/admin/follow-up` unless the product requirement changes.
 
 ## Build Notes
 
@@ -124,14 +133,19 @@ pause and propose the smallest safe path before implementing
 - [app/api/submit-form/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/submit-form/route.ts)
 - [app/admin/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/page.tsx)
 - [app/admin/AdminSubmissionsList.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/AdminSubmissionsList.tsx)
+- [app/admin/follow-up/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/follow-up/page.tsx)
+- [app/admin/follow-up/FollowUpTable.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/follow-up/FollowUpTable.tsx)
+- [app/admin/types.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/types.ts)
 - [app/admin-login/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin-login/page.tsx)
 - [app/api/admin-login/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-login/route.ts)
 - [app/api/admin-hide/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-hide/route.ts)
+- [app/api/admin-follow-up/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-follow-up/route.ts)
 - [lib/admin-session.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/admin-session.ts)
 - [lib/supabase.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/supabase.ts)
 - [lib/supabase-admin.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/supabase-admin.ts)
 - [lib/uploadSignature.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/uploadSignature.ts)
 - [proxy.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/proxy.ts)
+- [supabase/admin_follow_up_columns.sql](/Users/tinasomchit-taylor/Desktop/my-form-app/supabase/admin_follow_up_columns.sql)
 
 ## Current Incomplete Areas
 
@@ -139,4 +153,4 @@ pause and propose the smallest safe path before implementing
 - starter metadata and README still need cleanup
 - no automated tests yet
 - server-side validation can be stronger
-- admin workflow is basic and does not yet support export, search, or richer operations tooling
+- admin workflow is better than before but still does not support export, search, or richer operations tooling

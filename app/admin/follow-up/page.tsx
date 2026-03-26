@@ -1,34 +1,35 @@
 export const dynamic = "force-dynamic";
 
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import AdminSubmissionsList from "./AdminSubmissionsList";
-import type { Submission } from "./types";
+import FollowUpTable from "./FollowUpTable";
+import type { Submission } from "../types";
 
-export default async function AdminPage() {
+export default async function AdminFollowUpPage() {
   const { data, error } = await supabaseAdmin
     .from("form_submissions")
     .select("*")
+    .not("is_hidden_in_admin", "is", true)
     .order("created_at", { ascending: false });
 
   const submissions = (data ?? []) as Submission[];
 
   return (
     <main className="min-h-screen bg-gray-50 p-6 md:p-10">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-[1400px]">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              รายการคำสั่งซื้อ / แบบฟอร์ม
+              ติดตามการโทร
             </h1>
             <p className="mt-2 text-gray-600">
-              ดูข้อมูลทั้งหมดแบบพับเก็บได้ พร้อมแยกคนที่ต้องการใบกำกับภาษี
+              แสดงข้อมูลทุกคนในตารางเดียว พร้อมแก้ไขอัปเดตหลังโทรออกได้ทันที
             </p>
             <div className="mt-4">
               <a
-                href="/admin/follow-up"
+                href="/admin"
                 className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
               >
-                ดูหน้าติดตามการโทร
+                กลับไปหน้ารายการคำสั่งซื้อ
               </a>
             </div>
           </div>
@@ -48,7 +49,7 @@ export default async function AdminPage() {
             Error: {error.message}
           </div>
         ) : (
-          <AdminSubmissionsList submissions={submissions} />
+          <FollowUpTable submissions={submissions} />
         )}
       </div>
     </main>

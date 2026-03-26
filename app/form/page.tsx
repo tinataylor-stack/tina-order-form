@@ -10,9 +10,9 @@ export default function FormPage() {
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
   const startSmartCourseName = 'Start Smart | เริ่มให้ถูกทาง แบบคนที่ "รู้เกม"';
   const startSmartTiers = [
-    "แบบวิเคราะห์ให้ 299 บาท",
-    "แบบเอาจริง 1,990 บาท",
-    "แบบใกล้ชิด 19,990 บาท",
+    "แบบวิเคราะห์ให้ 499 บาท",
+    "แบบเอาจริง 2,990 บาท",
+    "แบบใกล้ชิด 29,990 บาท",
   ];
   const quickContentCourseName = "คอร์ส Quick Content";
   const quickContentTiers = ["แบบ Basic", "แบบ VIP"];
