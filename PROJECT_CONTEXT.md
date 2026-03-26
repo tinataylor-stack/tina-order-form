@@ -1,0 +1,186 @@
+# PROJECT_CONTEXT.md
+
+## Project Summary
+
+This project is a Thai-language registration and order intake app for digital courses and products.
+
+Users fill out a multi-step form, confirm terms, provide a signature, and submit their details. The backend stores the submission in Supabase and uploads the signature image to Supabase Storage. An internal admin page lets the team review submissions, focus on invoice requests, and hide records from the active list.
+
+## What Is Built
+
+- Public registration flow at `/form`
+  - 8-step multi-step form
+  - course selection, including tiered options for selected products
+  - buyer contact details
+  - payment method
+  - birth date picker
+  - occupation capture
+  - conditional business-description step for business owners
+  - conditional tax invoice flow for personal and company invoice details
+  - terms acceptance checkbox
+  - signature capture before final submit
+- Submission pipeline
+  - client validates each step before advancing
+  - final submit posts JSON to `/api/submit-form`
+  - backend uploads signature PNG to Supabase Storage bucket `signatures`
+  - backend inserts a row into `form_submissions`
+- Thank-you flow
+  - redirects to `/thank-you`
+  - shows the user's nickname when available
+- Admin flow
+  - password-protected login at `/admin-login`
+  - cookie-based admin session
+  - protected admin page at `/admin`
+  - collapsible submission list
+  - filters for all, invoice-only, and hidden records
+  - hide/unhide action for submissions
+
+## Current Architecture
+
+### Frontend
+
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- TailwindCSS v4
+- Client components for the interactive form and admin list
+
+### Backend
+
+- Next.js route handlers under `app/api`
+- Supabase JavaScript client
+- Supabase Storage for signature uploads
+- Custom admin cookie session using HMAC signing via Web Crypto
+
+### Data Flow
+
+1. User lands on `/` and is redirected to `/form`
+2. User completes the step-based form in the browser
+3. Frontend validates required fields before moving to the next step
+4. On final submit, frontend converts the signature to base64 and posts the full payload to `/api/submit-form`
+5. Backend normalizes a few fields such as payment method and occupation
+6. Backend uploads the signature image to Supabase Storage
+7. Backend inserts the submission into `form_submissions`
+8. Frontend redirects the user to `/thank-you?nickname=...`
+9. Admin logs in through `/admin-login`
+10. Backend sets a signed `admin-session` cookie
+11. Middleware-like protection in `proxy.ts` gates access to `/admin`
+12. Admin page reads all `form_submissions` rows and renders the review UI
+
+## Database Shape
+
+### `form_submissions`
+
+This table is expected to store:
+
+- basic buyer info
+  - `name`
+  - `first_name`
+  - `last_name`
+  - `nickname`
+  - `email`
+  - `phone`
+- order details
+  - `course`
+  - `payment_method`
+- profile details
+  - `birth_date`
+  - `occupation`
+  - `business_description`
+- invoice details
+  - `wants_invoice`
+  - `invoice_type`
+  - `personal_tax_name`
+  - `personal_tax_id`
+  - `personal_address`
+  - `personal_invoice_email`
+  - `company_name`
+  - `company_tax_id`
+  - `company_address`
+  - `company_invoice_email`
+  - `company_contact_name`
+  - `company_contact_phone`
+- compliance and admin fields
+  - `accepted_terms`
+  - `signature_url`
+  - `is_hidden_in_admin`
+  - timestamps such as `created_at`
+
+## Key Files
+
+- [app/form/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/form/page.tsx)
+  - main client-side multi-step registration flow and validation
+- [components/BirthDatePicker.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/components/BirthDatePicker.tsx)
+  - reusable date picker for birth date input
+- [app/api/submit-form/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/submit-form/route.ts)
+  - receives final form submission, uploads signature, inserts Supabase row
+- [lib/uploadSignature.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/uploadSignature.ts)
+  - converts base64 signature input into a stored public image URL
+- [app/admin-login/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin-login/page.tsx)
+  - password login UI for admins
+- [app/api/admin-login/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-login/route.ts)
+  - validates admin password and sets session cookie
+- [lib/admin-session.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/admin-session.ts)
+  - HMAC-based admin session token creation and verification
+- [proxy.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/proxy.ts)
+  - protects `/admin` and redirects authenticated admins away from `/admin-login`
+- [app/admin/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/page.tsx)
+  - server-rendered admin entry page that fetches submissions
+- [app/admin/AdminSubmissionsList.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/AdminSubmissionsList.tsx)
+  - admin filtering, hide/unhide controls, and submission detail rendering
+- [app/api/admin-hide/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-hide/route.ts)
+  - updates `is_hidden_in_admin` for a submission
+- [lib/supabase.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/supabase.ts)
+  - client used for standard submission writes
+- [lib/supabase-admin.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/supabase-admin.ts)
+  - service-role client used for admin reads and storage writes
+
+## Environment Variables
+
+Expected local environment variables:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+ADMIN_PAGE_PASSWORD=
+ADMIN_SESSION_SECRET=
+```
+
+Notes:
+
+- `ADMIN_SESSION_SECRET` falls back to `ADMIN_PAGE_PASSWORD` if not set
+- do not commit real values
+
+## Current Goal
+
+The current goal appears to be running this as a practical production intake tool for course purchases and invoice collection.
+
+Most likely priorities, based on the current codebase, are:
+
+- keep the registration flow smooth and easy for Thai-speaking users
+- collect complete invoice and contact data accurately
+- give admins a simple way to review and manage incoming submissions
+- continue polishing reliability, validation, copy, and internal workflow details
+
+## What Is Incomplete
+
+- `README.md` and app metadata still use starter Next.js defaults
+- there is no schema file or deeper setup documentation in this repo yet
+- there are no automated tests
+- server-side validation is lighter than the client-side form validation
+- admin auth is simple password plus signed cookie, not a full user system
+- admin list currently reloads the page after hide/unhide actions
+- there is no export/reporting workflow yet for operations or accounting
+
+## Important Notes
+
+- User-facing form copy is primarily Thai and should stay natural and easy to understand
+- Keep frontend-only env vars separate from server-only secrets
+- Do not expose the service role key to the client
+- Changes to form fields should be kept in sync with the Supabase table shape and admin UI
+- Changes to invoice-related fields should be checked across:
+  - form step logic
+  - submit API mapping
+  - admin display
+- Signature handling depends on the Supabase Storage bucket `signatures` existing and being configured correctly
