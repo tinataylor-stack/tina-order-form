@@ -459,7 +459,7 @@ export default function AdminSubmissionsList({
                           {index + 1}
                         </span>
 
-                        <h2 className="break-words text-lg font-semibold">
+                        <h2 className="break-words text-lg font-semibold text-gray-900">
                           {fullName}
                         </h2>
 

@@ -11,13 +11,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, outboundCalled, outboundCallNote, disqualified } = body;
+    const {
+      id,
+      outboundCalled,
+      outboundCallNote,
+      disqualified,
+      noNeedToFollowUp,
+    } = body;
 
     if (
       !id ||
       typeof outboundCalled !== "boolean" ||
       typeof outboundCallNote !== "string" ||
-      (disqualified !== undefined && typeof disqualified !== "boolean")
+      (disqualified !== undefined && typeof disqualified !== "boolean") ||
+      (noNeedToFollowUp !== undefined &&
+        typeof noNeedToFollowUp !== "boolean")
     ) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
@@ -26,6 +34,7 @@ export async function POST(request: NextRequest) {
       outbound_called: boolean;
       outbound_call_note: string;
       disqualified?: boolean;
+      no_need_follow_up?: boolean;
     } = {
       outbound_called: outboundCalled,
       outbound_call_note: outboundCallNote.trim(),
@@ -33,6 +42,10 @@ export async function POST(request: NextRequest) {
 
     if (typeof disqualified === "boolean") {
       updatePayload.disqualified = disqualified;
+    }
+
+    if (typeof noNeedToFollowUp === "boolean") {
+      updatePayload.no_need_follow_up = noNeedToFollowUp;
     }
 
     const { error } = await supabaseAdmin
@@ -52,6 +65,9 @@ export async function POST(request: NextRequest) {
         outbound_call_note: outboundCallNote.trim(),
         ...(typeof disqualified === "boolean"
           ? { disqualified }
+          : {}),
+        ...(typeof noNeedToFollowUp === "boolean"
+          ? { no_need_follow_up: noNeedToFollowUp }
           : {}),
       },
     });

@@ -35,12 +35,18 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
   - filters for all, invoice-only, and hidden records
   - hide/unhide action for submissions
   - closer follow-up panel inside each expanded admin record
-  - follow-up fields for outbound called, outbound call note, and disqualified
+  - follow-up fields for outbound called, outbound call note, disqualified, and no-follow-up
   - separate follow-up table at `/admin/follow-up`
   - follow-up table excludes records hidden from the main admin page
+  - follow-up table supports these status options:
+    - followed up
+    - disqualified
+    - both
+    - no follow-up
   - auto-save behavior on the follow-up table:
     - status saves immediately on change
     - note saves automatically after a short pause
+  - dark-mode readability protection for editable controls
 
 ## Current Architecture
 
@@ -117,6 +123,7 @@ This table is expected to store:
   - `outbound_called`
   - `outbound_call_note`
   - `disqualified`
+  - `no_need_follow_up`
   - timestamps such as `created_at`
 
 ## Key Files
@@ -124,7 +131,7 @@ This table is expected to store:
 - [app/form/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/form/page.tsx)
   - main client-side multi-step registration flow and validation
 - [components/BirthDatePicker.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/components/BirthDatePicker.tsx)
-  - reusable date picker for birth date input
+  - reusable date picker for birth date input with explicit readable text styling
 - [app/api/submit-form/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/submit-form/route.ts)
   - receives final form submission, uploads signature, inserts Supabase row
 - [lib/uploadSignature.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/uploadSignature.ts)
@@ -144,13 +151,15 @@ This table is expected to store:
 - [app/admin/follow-up/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/follow-up/page.tsx)
   - server-rendered follow-up page for table-based review of non-hidden leads
 - [app/admin/follow-up/FollowUpTable.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/follow-up/FollowUpTable.tsx)
-  - table UI for follow-up status and note editing with auto-save behavior
+  - table UI for follow-up status and note editing with auto-save behavior and multiple status options
 - [app/admin/types.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/types.ts)
   - shared submission type used by admin surfaces
 - [app/api/admin-hide/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-hide/route.ts)
   - updates `is_hidden_in_admin` for a submission
 - [app/api/admin-follow-up/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-follow-up/route.ts)
   - saves closer follow-up fields for a submission
+- [app/globals.css](/Users/tinasomchit-taylor/Desktop/my-form-app/app/globals.css)
+  - global styling, including readable light styling for editable controls
 - [lib/supabase.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/supabase.ts)
   - client used for standard submission writes
 - [lib/supabase-admin.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/supabase-admin.ts)
@@ -184,6 +193,7 @@ Current working priorities visible in the codebase are:
 - keep the registration flow smooth for Thai-speaking users
 - collect complete contact, invoice, and signature data accurately
 - let admins review submissions, hide records from active views, and manage follow-up status
+- keep editable controls readable when the browser prefers dark mode
 - support periodic updates to the course selection text on the first step of the form when offerings or pricing change
 
 ## What Is Incomplete
@@ -210,4 +220,5 @@ Current working priorities visible in the codebase are:
   - `/admin/follow-up`
   - `/api/admin-follow-up`
   - Supabase column definitions
+- Editable controls are intentionally protected with explicit light styling for readability in browser dark mode
 - Signature handling depends on the Supabase Storage bucket `signatures` existing and being configured correctly

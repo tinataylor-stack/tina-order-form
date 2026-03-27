@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { Submission } from "../types";
 
-type FollowUpStatus = "none" | "called" | "disqualified" | "both";
+type FollowUpStatus =
+  | "none"
+  | "called"
+  | "disqualified"
+  | "both"
+  | "no_need_follow_up";
 
 function formatSubmittedAt(createdAt: string | null) {
   if (!createdAt) return "-";
@@ -31,13 +36,15 @@ export default function FollowUpTable({
   >(() =>
     Object.fromEntries(
       submissions.map((submission) => {
-        const status: FollowUpStatus = submission.outbound_called
-          ? submission.disqualified
-            ? "both"
-            : "called"
-          : submission.disqualified
-            ? "disqualified"
-            : "none";
+        const status: FollowUpStatus = submission.no_need_follow_up
+          ? "no_need_follow_up"
+          : submission.outbound_called
+            ? submission.disqualified
+              ? "both"
+              : "called"
+            : submission.disqualified
+              ? "disqualified"
+              : "none";
 
         return [
           submission.id,
@@ -76,6 +83,7 @@ export default function FollowUpTable({
     const outboundCalled = draft.status === "called" || draft.status === "both";
     const disqualified =
       draft.status === "disqualified" || draft.status === "both";
+    const noNeedToFollowUp = draft.status === "no_need_follow_up";
 
     try {
       setSavingIds((current) => ({
@@ -97,6 +105,7 @@ export default function FollowUpTable({
           outboundCalled,
           outboundCallNote,
           disqualified,
+          noNeedToFollowUp,
         }),
       });
 
@@ -120,6 +129,7 @@ export default function FollowUpTable({
                 outbound_called: outboundCalled,
                 outbound_call_note: trimmedNote,
                 disqualified,
+                no_need_follow_up: noNeedToFollowUp,
               }
             : submission
         )
@@ -200,12 +210,24 @@ export default function FollowUpTable({
             const selectedStatus = drafts[submission.id]?.status ?? "none";
             const statusClass =
               selectedStatus === "called"
-                ? "border-green-200 bg-green-50 text-green-700"
+                ? "border-green-200"
                 : selectedStatus === "disqualified"
-                  ? "border-red-200 bg-red-50 text-red-700"
+                  ? "border-red-200"
                   : selectedStatus === "both"
-                    ? "border-orange-200 bg-orange-50 text-orange-700"
-                    : "border-gray-300 bg-white text-gray-700";
+                    ? "border-orange-200"
+                    : selectedStatus === "no_need_follow_up"
+                      ? "border-gray-300"
+                    : "border-gray-300";
+            const statusStyle =
+              selectedStatus === "called"
+                ? { backgroundColor: "#f0fdf4", color: "#15803d" }
+                : selectedStatus === "disqualified"
+                  ? { backgroundColor: "#fef2f2", color: "#b91c1c" }
+                  : selectedStatus === "both"
+                    ? { backgroundColor: "#fff7ed", color: "#c2410c" }
+                    : selectedStatus === "no_need_follow_up"
+                      ? { backgroundColor: "#f9fafb", color: "#374151" }
+                      : { backgroundColor: "#ffffff", color: "#374151" };
 
             return (
               <tr key={submission.id} className="align-top">
@@ -261,11 +283,13 @@ export default function FollowUpTable({
                       void saveRow(submission.id, nextDraft);
                     }}
                     className={`min-w-[132px] rounded-xl border px-2.5 py-2 text-sm outline-none transition focus:border-black ${statusClass}`}
+                    style={statusStyle}
                   >
                     <option value="none">-</option>
                     <option value="called">✓ Followed Up</option>
                     <option value="disqualified">✕ Disqualified</option>
                     <option value="both">✓ + ✕ Both</option>
+                    <option value="no_need_follow_up">No Follow-Up</option>
                   </select>
                 </td>
                 <td className="border-b border-gray-100 px-3 py-3">
@@ -276,13 +300,15 @@ export default function FollowUpTable({
                         outboundCallNote: e.target.value,
                         status:
                           drafts[submission.id]?.status ??
-                          (submission.outbound_called
-                            ? submission.disqualified
-                              ? "both"
-                              : "called"
-                            : submission.disqualified
-                              ? "disqualified"
-                              : "none"),
+                          (submission.no_need_follow_up
+                            ? "no_need_follow_up"
+                            : submission.outbound_called
+                              ? submission.disqualified
+                                ? "both"
+                                : "called"
+                              : submission.disqualified
+                                ? "disqualified"
+                                : "none"),
                       };
 
                       setDrafts((current) => ({

@@ -30,4 +30,5 @@ export type Submission = {
   outbound_called: boolean | null;
   outbound_call_note: string | null;
   disqualified: boolean | null;
+  no_need_follow_up: boolean | null;
 };

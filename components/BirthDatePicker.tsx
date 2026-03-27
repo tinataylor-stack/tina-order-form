@@ -39,19 +39,19 @@ export default function BirthDatePicker({
   const defaultMonth = selected ?? new Date(2000, 0);
 
   return (
-    <div className="relative" ref={wrapperRef}>
-      <label className="block mb-1">วัน/เดือน/ปีเกิด</label>
+    <div className="relative text-gray-900" ref={wrapperRef}>
+      <label className="mb-1 block text-gray-900">วัน/เดือน/ปีเกิด</label>
 
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full border border-gray-300 rounded-md p-2 text-left bg-white"
+        className="w-full rounded-md border border-gray-300 bg-white p-2 text-left text-gray-900"
       >
         {value || "เลือกวัน/เดือน/ปีเกิด"}
       </button>
 
       {open && (
-        <div className="absolute z-20 mt-2 bg-white border border-gray-300 rounded-md shadow-lg p-3">
+        <div className="absolute z-20 mt-2 rounded-md border border-gray-300 bg-white p-3 text-gray-900 shadow-lg">
           <DayPicker
             mode="single"
             selected={selected}
