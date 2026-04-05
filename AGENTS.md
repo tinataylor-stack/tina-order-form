@@ -49,11 +49,13 @@ This repo is a Thai-language course registration and order intake app that:
 
 - Keep interactive UI in client components only when needed.
 - Keep server-only logic in route handlers or `lib/`.
-- Use `lib/supabase.ts` only for client-safe usage with public env vars.
+- Use `lib/supabase.ts` only for client-safe usage with public env vars. Do not use it for form submission writes.
 - Use `lib/supabase-admin.ts` only for server-side actions that require elevated access.
 - Keep admin session logic centralized in `lib/admin-session.ts`.
 - Avoid mixing validation, normalization, and rendering concerns in the same helper unless the coupling is intentional.
 - Prefer straightforward data mapping over abstractions for this small app.
+- Keep `form_submissions` protected by Supabase Row Level Security. Do not add `anon` access unless there is a clear product reason and the scope is narrowly defined.
+- Keep the `signatures` bucket private. Admin access to signature files should use short-lived signed URLs generated on the server.
 
 ## Coding Standards
 
@@ -103,12 +105,14 @@ Applies to:
   - `npm run start`
 - Run `npm run lint` after meaningful code changes.
 - Run `npm run build` before closing larger changes or routing/data-flow changes.
+- When changing submission or storage security behavior, verify both the public form submission flow and admin signature viewing flow.
 
 ## Things To Avoid
 
 - do not rewrite working form flow without a clear product reason
 - do not silently change the Supabase field mapping
 - do not move server secrets into client components
+- do not weaken RLS or make the `signatures` bucket public without a clear product requirement
 - do not add unnecessary state management libraries
 - do not leave form, API, and admin views out of sync
 - do not replace simple explicit logic with clever abstractions
@@ -146,6 +150,12 @@ pause and propose the smallest safe path before implementing
 - [lib/uploadSignature.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/uploadSignature.ts)
 - [proxy.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/proxy.ts)
 - [supabase/admin_follow_up_columns.sql](/Users/tinasomchit-taylor/Desktop/my-form-app/supabase/admin_follow_up_columns.sql)
+
+## Environment Notes
+
+- `ADMIN_PAGE_PASSWORD` and `ADMIN_SESSION_SECRET` should both be set explicitly.
+- Both admin secrets should be long, random, and kept private.
+- Do not rely on the fallback from `ADMIN_SESSION_SECRET` to `ADMIN_PAGE_PASSWORD` unless there is a short-term local-only reason.
 
 ## Current Incomplete Areas
 

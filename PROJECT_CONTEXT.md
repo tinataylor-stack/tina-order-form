@@ -4,13 +4,23 @@
 
 This project is a Thai-language registration and order intake app for digital courses and products.
 
-Users fill out a multi-step form, confirm terms, provide a signature, and submit their details. The backend stores the submission in Supabase and uploads the signature image to Supabase Storage. An internal admin page lets the team review submissions, focus on invoice requests, and hide records from the active list.
+Users fill out a multi-step form, confirm terms, provide a signature, and submit their details. The backend stores the submission in Supabase and uploads the signature image to a private Supabase Storage bucket. An internal admin page lets the team review submissions, focus on invoice requests, and hide records from the active list.
 
 ## What Is Built
 
 - Public registration flow at `/form`
   - 8-step multi-step form
   - course selection, including tiered options for selected products
+  - first-step course options currently include:
+    - `Make It Sell In 30 Days | เริ่มมีลูกค้าและขายได้จริงใน 30 วัน`
+    - `แบบวิเคราะห์ Start Smart System`
+    - `คอร์ส Quick Content`
+    - `Ebook Ai สำหรับเด็ก`
+    - `อื่น ๆ โปรดระบุ`
+  - `Make It Sell In 30 Days | เริ่มมีลูกค้าและขายได้จริงใน 30 วัน` currently has these tier options:
+    - `แบบวางแผนให้ 499 บาท`
+    - `แบบเอาจริง 2,990 บาท`
+    - `แบบใกล้ชิด 29,990 บาท`
   - buyer contact details
   - payment method
   - birth date picker
@@ -22,8 +32,8 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
 - Submission pipeline
   - client validates each step before advancing
   - final submit posts JSON to `/api/submit-form`
-  - backend uploads signature PNG to Supabase Storage bucket `signatures`
-  - backend inserts a row into `form_submissions`
+  - backend uploads signature PNG to private Supabase Storage bucket `signatures`
+  - backend inserts a row into `form_submissions` using the server-side service-role client
 - Thank-you flow
   - redirects to `/thank-you`
   - shows the user's nickname when available
@@ -38,6 +48,7 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
   - follow-up fields for outbound called, outbound call note, disqualified, and no-follow-up
   - separate follow-up table at `/admin/follow-up`
   - follow-up table excludes records hidden from the main admin page
+  - signature previews in admin are served through short-lived signed URLs
   - follow-up table supports these status options:
     - followed up
     - disqualified
@@ -63,8 +74,18 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
 
 - Next.js route handlers under `app/api`
 - Supabase JavaScript client
-- Supabase Storage for signature uploads
+- server-side service-role Supabase client for admin reads, form submission writes, and signature uploads
+- private Supabase Storage bucket for signatures
 - Custom admin cookie session using HMAC signing via Web Crypto
+- signed Storage URLs generated on the server for admin signature access
+
+### Security Posture
+
+- `form_submissions` is expected to have Row Level Security enabled in Supabase
+- public browser clients should not write directly to `form_submissions`
+- the public form submits to `/api/submit-form`, and the server writes to Supabase
+- the `signatures` bucket is expected to be private
+- admin signature access is expected to use short-lived signed URLs
 
 ### Data Flow
 
@@ -73,13 +94,13 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
 3. Frontend validates required fields before moving to the next step
 4. On final submit, frontend converts the signature to base64 and posts the full payload to `/api/submit-form`
 5. Backend normalizes a few fields such as payment method and occupation
-6. Backend uploads the signature image to Supabase Storage
-7. Backend inserts the submission into `form_submissions`
+6. Backend uploads the signature image to the private `signatures` bucket and stores the object path
+7. Backend inserts the submission into `form_submissions` using the server-side service-role client
 8. Frontend redirects the user to `/thank-you?nickname=...`
 9. Admin logs in through `/admin-login`
 10. Backend sets a signed `admin-session` cookie
 11. Middleware-like protection in `proxy.ts` gates access to `/admin`
-12. Admin page reads all `form_submissions` rows and renders the review UI
+12. Admin page reads all `form_submissions` rows and converts any stored signature reference into a short-lived signed URL
 13. Team can save follow-up status and note from the closer panel in `/admin`
 14. Team can use `/admin/follow-up` to review non-hidden leads in a table and update status/note from one place
 
@@ -133,9 +154,9 @@ This table is expected to store:
 - [components/BirthDatePicker.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/components/BirthDatePicker.tsx)
   - reusable date picker for birth date input with explicit readable text styling
 - [app/api/submit-form/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/submit-form/route.ts)
-  - receives final form submission, uploads signature, inserts Supabase row
+  - receives final form submission, uploads signature, and inserts the row using the server-side service-role client
 - [lib/uploadSignature.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/uploadSignature.ts)
-  - converts base64 signature input into a stored public image URL
+  - converts base64 signature input into a stored object in the private `signatures` bucket and returns the object path
 - [app/admin-login/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin-login/page.tsx)
   - password login UI for admins
 - [app/api/admin-login/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-login/route.ts)
@@ -145,7 +166,7 @@ This table is expected to store:
 - [proxy.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/proxy.ts)
   - protects `/admin` and redirects authenticated admins away from `/admin-login`
 - [app/admin/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/page.tsx)
-  - server-rendered admin entry page that fetches submissions
+  - server-rendered admin entry page that fetches submissions and creates signed signature URLs for admin viewing
 - [app/admin/AdminSubmissionsList.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/AdminSubmissionsList.tsx)
   - admin filtering, hide/unhide controls, submission detail rendering, and closer follow-up panel
 - [app/admin/follow-up/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/follow-up/page.tsx)
@@ -161,7 +182,7 @@ This table is expected to store:
 - [app/globals.css](/Users/tinasomchit-taylor/Desktop/my-form-app/app/globals.css)
   - global styling, including readable light styling for editable controls
 - [lib/supabase.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/supabase.ts)
-  - client used for standard submission writes
+  - client-safe Supabase client for public env usage only
 - [lib/supabase-admin.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/supabase-admin.ts)
   - service-role client used for admin reads and storage writes
 - [supabase/admin_follow_up_columns.sql](/Users/tinasomchit-taylor/Desktop/my-form-app/supabase/admin_follow_up_columns.sql)
@@ -186,13 +207,14 @@ Notes:
 
 ## Current Goal
 
-The current goal is to run this as a practical production intake tool for course purchases and invoice collection, with lightweight internal follow-up workflow support for the closer team.
+The current goal is to run this as a practical production intake tool for course purchases and invoice collection, with lightweight internal follow-up workflow support for the closer team and a safer default security posture for customer and signature data.
 
 Current working priorities visible in the codebase are:
 
 - keep the registration flow smooth for Thai-speaking users
 - collect complete contact, invoice, and signature data accurately
 - let admins review submissions, hide records from active views, and manage follow-up status
+- keep submission writes server-side and keep signature files private
 - keep editable controls readable when the browser prefers dark mode
 - support periodic updates to the course selection text on the first step of the form when offerings or pricing change
 
@@ -209,6 +231,7 @@ Current working priorities visible in the codebase are:
 - User-facing form copy is primarily Thai and should stay natural and easy to understand
 - Keep frontend-only env vars separate from server-only secrets
 - Do not expose the service role key to the client
+- `ADMIN_PAGE_PASSWORD` and `ADMIN_SESSION_SECRET` should both be set explicitly and kept private
 - Changes to form fields should be kept in sync with the Supabase table shape and admin UI
 - Changes to course options or pricing on the first step should be updated carefully in `app/form/page.tsx`
 - Changes to invoice-related fields should be checked across:
@@ -221,4 +244,4 @@ Current working priorities visible in the codebase are:
   - `/api/admin-follow-up`
   - Supabase column definitions
 - Editable controls are intentionally protected with explicit light styling for readability in browser dark mode
-- Signature handling depends on the Supabase Storage bucket `signatures` existing and being configured correctly
+- Signature handling depends on the Supabase Storage bucket `signatures` existing, being private, and supporting signed URL access from the server
