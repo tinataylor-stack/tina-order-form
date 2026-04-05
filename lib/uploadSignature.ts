@@ -15,9 +15,5 @@ export async function uploadSignature(base64: string) {
     throw error;
   }
 
-  const { data } = supabaseAdmin.storage
-    .from("signatures")
-    .getPublicUrl(fileName);
-
-  return data.publicUrl;
+  return fileName;
 }

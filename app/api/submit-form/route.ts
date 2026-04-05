@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { uploadSignature } from "@/lib/uploadSignature";
 
 export async function POST(request: Request) {
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
     console.log("submit-form: inserting into supabase");
 
-    const { error } = await supabase.from("form_submissions").insert([
+    const { error } = await supabaseAdmin.from("form_submissions").insert([
       {
         name: fullName,
         email,

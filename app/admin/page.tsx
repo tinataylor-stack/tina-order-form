@@ -4,13 +4,62 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import AdminSubmissionsList from "./AdminSubmissionsList";
 import type { Submission } from "./types";
 
+const LEGACY_PUBLIC_SIGNATURE_PREFIX = "/storage/v1/object/public/signatures/";
+
+function getSignatureObjectPath(signatureValue: string | null) {
+  if (!signatureValue) {
+    return null;
+  }
+
+  if (!signatureValue.startsWith("http")) {
+    return signatureValue;
+  }
+
+  const prefixIndex = signatureValue.indexOf(LEGACY_PUBLIC_SIGNATURE_PREFIX);
+
+  if (prefixIndex === -1) {
+    return null;
+  }
+
+  const pathWithQuery = signatureValue.slice(
+    prefixIndex + LEGACY_PUBLIC_SIGNATURE_PREFIX.length
+  );
+  const objectPath = pathWithQuery.split("?")[0];
+
+  return objectPath ? decodeURIComponent(objectPath) : null;
+}
+
+async function getSignedSignatureUrl(signatureValue: string | null) {
+  const objectPath = getSignatureObjectPath(signatureValue);
+
+  if (!objectPath) {
+    return signatureValue;
+  }
+
+  const { data, error } = await supabaseAdmin.storage
+    .from("signatures")
+    .createSignedUrl(objectPath, 60 * 60);
+
+  if (error) {
+    console.error("admin page: failed to create signed signature url", error);
+    return null;
+  }
+
+  return data.signedUrl;
+}
+
 export default async function AdminPage() {
   const { data, error } = await supabaseAdmin
     .from("form_submissions")
     .select("*")
     .order("created_at", { ascending: false });
 
-  const submissions = (data ?? []) as Submission[];
+  const submissions = await Promise.all(
+    ((data ?? []) as Submission[]).map(async (submission) => ({
+      ...submission,
+      signature_url: await getSignedSignatureUrl(submission.signature_url),
+    }))
+  );
 
   return (
     <main className="min-h-screen bg-gray-50 p-6 md:p-10">
