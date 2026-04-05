@@ -8,9 +8,10 @@ import SignatureCanvas from "react-signature-canvas";
 export default function FormPage() {
   const router = useRouter();
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
-  const startSmartCourseName = 'Start Smart | เริ่มให้ถูกทาง แบบคนที่ "รู้เกม"';
+  const startSmartCourseName =
+    'Make It Sell In 30 Days | เริ่มมีลูกค้าและขายได้จริงใน 30 วัน';
   const startSmartTiers = [
-    "แบบวิเคราะห์ให้ 499 บาท",
+    "แบบวางแผนให้ 499 บาท",
     "แบบเอาจริง 2,990 บาท",
     "แบบใกล้ชิด 29,990 บาท",
   ];
@@ -107,7 +108,7 @@ export default function FormPage() {
       }
 
       if (isStartSmartSystem && !startSmartTier) {
-        setMessage("กรุณาเลือกระดับของ Start Smart System");
+        setMessage("กรุณาเลือกระดับของ Make It Sell In 30 Days");
         return false;
       }
 
@@ -393,6 +394,24 @@ export default function FormPage() {
                       </div>
                     )}
                   </div>
+                </label>
+
+                <label
+                  className={radioCardClass(
+                    course === "แบบวิเคราะห์ Start Smart System"
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="course"
+                    value="แบบวิเคราะห์ Start Smart System"
+                    checked={course === "แบบวิเคราะห์ Start Smart System"}
+                    onChange={(e) => handleCourseChange(e.target.value)}
+                    className="mt-1"
+                  />
+                  <span className="font-medium text-gray-900">
+                    แบบวิเคราะห์ Start Smart System
+                  </span>
                 </label>
 
                 <label className={radioCardClass(isQuickContent)}>
