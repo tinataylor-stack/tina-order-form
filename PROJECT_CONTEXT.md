@@ -12,8 +12,8 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
   - 8-step multi-step form
   - course selection, including tiered options for selected products
   - first-step course options currently include:
+    - `Claude COWORK - Live Session`
     - `Make It Sell In 30 Days | เริ่มมีลูกค้าและขายได้จริงใน 30 วัน`
-    - `แบบวิเคราะห์ Start Smart System`
     - `คอร์ส Quick Content`
     - `Ebook Ai สำหรับเด็ก`
     - `อื่น ๆ โปรดระบุ`
