@@ -9,7 +9,7 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
 ## What Is Built
 
 - Public registration flow at `/form`
-  - 8-step multi-step form
+  - 9-step multi-step form
   - course selection, including tiered options for selected products
   - first-step course options currently include:
     - `Claude COWORK - Live Session 60 นาที`
@@ -17,6 +17,8 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
     - `คอร์ส Quick Content`
     - `Ebook Ai สำหรับเด็ก`
     - `อื่น ๆ โปรดระบุ`
+  - separate returning-buyer step with phone-based previous-order lookup
+  - returning buyers can prefill prior contact, profile, and invoice details from their latest submission
   - `Claude COWORK - Bootcamp 4 สัปดาห์` currently has these tier options:
     - `แบบวางแผนให้ 499 บาท`
     - `แบบเอาจริง 2,990 บาท`
@@ -31,6 +33,7 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
   - signature capture before final submit
 - Submission pipeline
   - client validates each step before advancing
+  - returning buyers can request prefill by phone through `/api/lookup-submission`
   - final submit posts JSON to `/api/submit-form`
   - backend uploads signature PNG to private Supabase Storage bucket `signatures`
   - backend inserts a row into `form_submissions` using the server-side service-role client
@@ -155,6 +158,8 @@ This table is expected to store:
   - reusable date picker for birth date input with explicit readable text styling
 - [app/api/submit-form/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/submit-form/route.ts)
   - receives final form submission, uploads signature, and inserts the row using the server-side service-role client
+- [app/api/lookup-submission/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/lookup-submission/route.ts)
+  - finds the latest matching submission by phone and returns prefill-safe fields for returning buyers
 - [lib/uploadSignature.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/uploadSignature.ts)
   - converts base64 signature input into a stored object in the private `signatures` bucket and returns the object path
 - [app/admin-login/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin-login/page.tsx)

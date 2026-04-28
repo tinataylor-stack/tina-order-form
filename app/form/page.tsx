@@ -8,8 +8,7 @@ import SignatureCanvas from "react-signature-canvas";
 export default function FormPage() {
   const router = useRouter();
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
-  const startSmartCourseName =
-    "Claude COWORK - Bootcamp 4 สัปดาห์";
+  const startSmartCourseName = "Claude COWORK - Bootcamp 4 สัปดาห์";
   const startSmartTiers = [
     "แบบวางแผนให้ 499 บาท",
     "แบบเอาจริง 2,990 บาท",
@@ -19,12 +18,17 @@ export default function FormPage() {
   const quickContentTiers = ["แบบ Basic", "แบบ VIP"];
 
   const [step, setStep] = useState(1);
-  const totalSteps = 8;
+  const totalSteps = 9;
 
   const [course, setCourse] = useState("");
   const [startSmartTier, setStartSmartTier] = useState("");
   const [quickContentTier, setQuickContentTier] = useState("");
   const [otherCourse, setOtherCourse] = useState("");
+  const [isReturningBuyer, setIsReturningBuyer] = useState("");
+  const [lookupPhone, setLookupPhone] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupMessage, setLookupMessage] = useState("");
+  const [hasLoadedPreviousData, setHasLoadedPreviousData] = useState(false);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -95,6 +99,127 @@ export default function FormPage() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
+  const normalizeDigits = (value: string) => value.replace(/\D/g, "");
+
+  const prefillPreviousSubmission = (submission: {
+    firstName: string | null;
+    lastName: string | null;
+    nickname: string | null;
+    email: string | null;
+    phone: string | null;
+    paymentMethod: string | null;
+    birthDate: string | null;
+    occupation: string | null;
+    businessDescription: string | null;
+    wantsInvoice: boolean | null;
+    invoiceType: string | null;
+    personalTaxName: string | null;
+    personalTaxId: string | null;
+    personalAddress: string | null;
+    personalInvoiceEmail: string | null;
+    companyName: string | null;
+    companyTaxId: string | null;
+    companyAddress: string | null;
+    companyInvoiceEmail: string | null;
+    companyContactName: string | null;
+    companyContactPhone: string | null;
+  }) => {
+    const savedPaymentMethod = submission.paymentMethod ?? "";
+    const savedOccupation = submission.occupation ?? "";
+    const isSavedBusinessOwner =
+      savedOccupation === "เจ้าของกิจการ / พ่อค้าแม่ค้าออนไลน์";
+
+    setFirstName(submission.firstName ?? "");
+    setLastName(submission.lastName ?? "");
+    setNickname(submission.nickname ?? "");
+    setEmail(submission.email ?? "");
+    setPhone(normalizeDigits(submission.phone ?? ""));
+    setBirthDate(submission.birthDate ?? "");
+    setBusinessDescription(submission.businessDescription ?? "");
+
+    if (
+      savedPaymentMethod === "โอนผ่านบัญชีธนาคาร" ||
+      savedPaymentMethod === "ตัดบัตร"
+    ) {
+      setPaymentMethod(savedPaymentMethod);
+      setOtherPaymentMethod("");
+    } else if (savedPaymentMethod) {
+      setPaymentMethod("other");
+      setOtherPaymentMethod(savedPaymentMethod);
+    } else {
+      setPaymentMethod("");
+      setOtherPaymentMethod("");
+    }
+
+    if (isSavedBusinessOwner) {
+      setOccupation("business-owner");
+      setOtherOccupation("");
+    } else if (savedOccupation) {
+      setOccupation("other");
+      setOtherOccupation(savedOccupation);
+    } else {
+      setOccupation("");
+      setOtherOccupation("");
+    }
+
+    setWantsInvoice(submission.wantsInvoice ? "yes" : "no");
+    setInvoiceType(submission.invoiceType ?? "");
+    setPersonalTaxName(submission.personalTaxName ?? "");
+    setPersonalTaxId(submission.personalTaxId ?? "");
+    setPersonalAddress(submission.personalAddress ?? "");
+    setPersonalInvoiceEmail(submission.personalInvoiceEmail ?? "");
+    setCompanyName(submission.companyName ?? "");
+    setCompanyTaxId(submission.companyTaxId ?? "");
+    setCompanyAddress(submission.companyAddress ?? "");
+    setCompanyInvoiceEmail(submission.companyInvoiceEmail ?? "");
+    setCompanyContactName(submission.companyContactName ?? "");
+    setCompanyContactPhone(normalizeDigits(submission.companyContactPhone ?? ""));
+    setAcceptedTerms(false);
+    clearSignature();
+    setHasLoadedPreviousData(true);
+  };
+
+  const handleLookupPreviousSubmission = async () => {
+    const normalizedPhone = normalizeDigits(lookupPhone);
+
+    if (!normalizedPhone) {
+      setLookupMessage("กรุณากรอกเบอร์โทรที่เคยใช้สั่งซื้อ");
+      return;
+    }
+
+    try {
+      setLookupLoading(true);
+      setLookupMessage("");
+
+      const res = await fetch("/api/lookup-submission", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: normalizedPhone,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setHasLoadedPreviousData(false);
+        setLookupMessage(data.error || "ไม่สามารถดึงข้อมูลเดิมได้");
+        return;
+      }
+
+      prefillPreviousSubmission(data.submission);
+      setLookupPhone(normalizedPhone);
+      setLookupMessage("ดึงข้อมูลเดิมเรียบร้อยแล้ว คุณสามารถแก้ไขได้ก่อนส่ง");
+    } catch {
+      setHasLoadedPreviousData(false);
+      setLookupMessage("เกิดข้อผิดพลาดในการค้นหาข้อมูลเดิม");
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
   const validateBeforeNext = () => {
     if (step === 1) {
       if (!course) {
@@ -119,6 +244,13 @@ export default function FormPage() {
     }
 
     if (step === 2) {
+      if (!isReturningBuyer) {
+        setMessage("กรุณาเลือกว่าคุณเคยซื้อคอร์สกับเรามาก่อนหรือไม่");
+        return false;
+      }
+    }
+
+    if (step === 3) {
       if (!firstName.trim() || !lastName.trim() || !email.trim() || !phone.trim()) {
         setMessage("กรุณากรอกข้อมูลในหน้านี้ให้ครบ");
         return false;
@@ -130,7 +262,7 @@ export default function FormPage() {
       }
     }
 
-    if (step === 3) {
+    if (step === 4) {
       if (!paymentMethod || !birthDate || !occupation) {
         setMessage("กรุณากรอกข้อมูลในหน้านี้ให้ครบ");
         return false;
@@ -147,24 +279,24 @@ export default function FormPage() {
       }
     }
 
-    if (step === 4 && isBusinessOwner) {
+    if (step === 5 && isBusinessOwner) {
       if (!businessDescription.trim()) {
         setMessage("กรุณาบรรยายธุรกิจของคุณ");
         return false;
       }
     }
 
-    if (step === 5 && !wantsInvoice) {
+    if (step === 6 && !wantsInvoice) {
       setMessage("กรุณาเลือกว่าต้องการใบกำกับภาษีหรือไม่");
       return false;
     }
 
-    if (step === 6 && needsInvoice && !invoiceType) {
+    if (step === 7 && needsInvoice && !invoiceType) {
       setMessage("กรุณาเลือกประเภทใบกำกับภาษี");
       return false;
     }
 
-    if (step === 7 && needsInvoice && isPersonalInvoice) {
+    if (step === 8 && needsInvoice && isPersonalInvoice) {
       if (
         !personalTaxName.trim() ||
         !personalTaxId.trim() ||
@@ -181,7 +313,7 @@ export default function FormPage() {
       }
     }
 
-    if (step === 7 && needsInvoice && isCompanyInvoice) {
+    if (step === 8 && needsInvoice && isCompanyInvoice) {
       if (
         !companyName.trim() ||
         !companyTaxId.trim() ||
@@ -207,18 +339,18 @@ export default function FormPage() {
   const handleNext = () => {
     if (!validateBeforeNext()) return;
 
-    if (step === 3 && !isBusinessOwner) {
-      setStep(5);
+    if (step === 4 && !isBusinessOwner) {
+      setStep(6);
       return;
     }
 
-    if (step === 5 && wantsInvoice === "no") {
+    if (step === 6 && wantsInvoice === "no") {
+      setStep(9);
+      return;
+    }
+
+    if (step === 7 && needsInvoice) {
       setStep(8);
-      return;
-    }
-
-    if (step === 6 && needsInvoice) {
-      setStep(7);
       return;
     }
 
@@ -228,18 +360,18 @@ export default function FormPage() {
   const handlePrev = () => {
     setMessage("");
 
-    if (step === 5 && !isBusinessOwner) {
-      setStep(3);
+    if (step === 6 && !isBusinessOwner) {
+      setStep(4);
       return;
     }
 
-    if (step === 8 && wantsInvoice === "no") {
-      setStep(5);
-      return;
-    }
-
-    if (step === 7) {
+    if (step === 9 && wantsInvoice === "no") {
       setStep(6);
+      return;
+    }
+
+    if (step === 8) {
+      setStep(7);
       return;
     }
 
@@ -489,10 +621,100 @@ export default function FormPage() {
           {step === 2 && (
             <div className="space-y-5">
               <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  เคยซื้อคอร์สกับเราแล้วหรือไม่
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  ถ้าเคยซื้อแล้ว คุณสามารถดึงข้อมูลเดิมด้วยเบอร์โทรเพื่อไม่ต้องกรอกซ้ำ
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <label className={radioCardClass(isReturningBuyer === "yes")}>
+                  <input
+                    type="radio"
+                    name="isReturningBuyer"
+                    value="yes"
+                    checked={isReturningBuyer === "yes"}
+                    onChange={(e) => {
+                      setIsReturningBuyer(e.target.value);
+                      setLookupMessage("");
+                    }}
+                    className="mt-1"
+                  />
+                  <span className="font-medium text-gray-900">เคยซื้อแล้ว</span>
+                </label>
+
+                <label className={radioCardClass(isReturningBuyer === "no")}>
+                  <input
+                    type="radio"
+                    name="isReturningBuyer"
+                    value="no"
+                    checked={isReturningBuyer === "no"}
+                    onChange={(e) => {
+                      setIsReturningBuyer(e.target.value);
+                      setLookupMessage("");
+                    }}
+                    className="mt-1"
+                  />
+                  <span className="font-medium text-gray-900">ยังไม่เคยซื้อ</span>
+                </label>
+              </div>
+
+              {isReturningBuyer === "yes" && (
+                <div className="space-y-4 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      เบอร์โทรที่เคยใช้สั่งซื้อ
+                    </label>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-black"
+                      value={lookupPhone}
+                      onChange={(e) => {
+                        setLookupPhone(normalizeDigits(e.target.value));
+                        setLookupMessage("");
+                      }}
+                      placeholder="0812345678"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleLookupPreviousSubmission}
+                    disabled={lookupLoading}
+                    className="w-full rounded-xl bg-black px-4 py-3 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {lookupLoading ? "กำลังค้นหาข้อมูล..." : "ดึงข้อมูลเดิม"}
+                  </button>
+
+                  <p className="text-sm text-gray-500">
+                    หากค้นหาไม่พบ คุณยังสามารถกดถัดไปแล้วกรอกข้อมูลเองได้ตามปกติ
+                  </p>
+
+                  {lookupMessage ? (
+                    <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+                      {lookupMessage}
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-5">
+              <div>
                 <h2 className="text-xl font-semibold text-gray-900">ข้อมูลผู้สั่งซื้อ</h2>
                 <p className="mt-1 text-sm text-gray-500">
                   กรอกข้อมูลติดต่อสำหรับการลงทะเบียน
                 </p>
+                {hasLoadedPreviousData ? (
+                  <p className="mt-2 text-sm text-green-700">
+                    ดึงข้อมูลเดิมมาให้แล้ว คุณสามารถแก้ไขก่อนส่งได้
+                  </p>
+                ) : null}
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -557,7 +779,7 @@ export default function FormPage() {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <div className="space-y-6">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">ข้อมูลเพิ่มเติม</h2>
@@ -666,7 +888,7 @@ export default function FormPage() {
             </div>
           )}
 
-          {step === 4 && isBusinessOwner && (
+          {step === 5 && isBusinessOwner && (
             <div className="space-y-5">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">ข้อมูลธุรกิจ</h2>
@@ -689,7 +911,7 @@ export default function FormPage() {
             </div>
           )}
 
-          {step === 5 && (
+          {step === 6 && (
             <div className="space-y-5">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">ใบกำกับภาษี</h2>
@@ -726,7 +948,7 @@ export default function FormPage() {
             </div>
           )}
 
-          {step === 6 && needsInvoice && (
+          {step === 7 && needsInvoice && (
             <div className="space-y-5">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">ประเภทใบกำกับภาษี</h2>
@@ -763,7 +985,7 @@ export default function FormPage() {
             </div>
           )}
 
-          {step === 7 && needsInvoice && isPersonalInvoice && (
+          {step === 8 && needsInvoice && isPersonalInvoice && (
             <div className="space-y-5">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">ข้อมูลใบกำกับภาษี</h2>
@@ -815,7 +1037,7 @@ export default function FormPage() {
             </div>
           )}
 
-          {step === 7 && needsInvoice && isCompanyInvoice && (
+          {step === 8 && needsInvoice && isCompanyInvoice && (
             <div className="space-y-5">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">ข้อมูลใบกำกับภาษี</h2>
@@ -896,7 +1118,7 @@ export default function FormPage() {
             </div>
           )}
 
-          {step === 8 && (
+          {step === 9 && (
             <div className="space-y-5">
               <div>
                 <h2 className="text-2xl font-semibold tracking-tight text-gray-900">
@@ -976,7 +1198,7 @@ export default function FormPage() {
               </button>
             )}
 
-            {step < 8 && (
+            {step < 9 && (
               <button
                 type="button"
                 onClick={handleNext}
@@ -986,7 +1208,7 @@ export default function FormPage() {
               </button>
             )}
 
-            {step === 8 && (
+            {step === 9 && (
               <button
                 type="submit"
                 disabled={loading}
