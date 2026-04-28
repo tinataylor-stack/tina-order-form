@@ -42,6 +42,7 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
   - protected admin page at `/admin`
   - collapsible submission list
   - filters for all, invoice-only, and hidden records
+  - admin-only course correction from the expanded submission view
   - hide/unhide action for submissions
   - closer follow-up panel inside each expanded admin record
   - follow-up fields for outbound called, outbound call note, disqualified, and no-follow-up
@@ -100,8 +101,9 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
 10. Backend sets a signed `admin-session` cookie
 11. Middleware-like protection in `proxy.ts` gates access to `/admin`
 12. Admin page reads all `form_submissions` rows and converts any stored signature reference into a short-lived signed URL
-13. Team can save follow-up status and note from the closer panel in `/admin`
-14. Team can use `/admin/follow-up` to review non-hidden leads in a table and update status/note from one place
+13. Team can correct a submission's `course` value from `/admin`
+14. Team can save follow-up status and note from the closer panel in `/admin`
+15. Team can use `/admin/follow-up` to review non-hidden leads in a table and update status/note from one place
 
 ## Database Shape
 
@@ -169,7 +171,7 @@ This table is expected to store:
 - [app/admin/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/page.tsx)
   - server-rendered admin entry page that fetches submissions and creates signed signature URLs for admin viewing
 - [app/admin/AdminSubmissionsList.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/AdminSubmissionsList.tsx)
-  - admin filtering, hide/unhide controls, submission detail rendering, and closer follow-up panel
+  - admin filtering, course correction, hide/unhide controls, submission detail rendering, and closer follow-up panel
 - [app/admin/follow-up/page.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/follow-up/page.tsx)
   - server-rendered follow-up page for table-based review of non-hidden leads
 - [app/admin/follow-up/FollowUpTable.tsx](/Users/tinasomchit-taylor/Desktop/my-form-app/app/admin/follow-up/FollowUpTable.tsx)
@@ -180,6 +182,8 @@ This table is expected to store:
   - updates `is_hidden_in_admin` for a submission
 - [app/api/admin-follow-up/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-follow-up/route.ts)
   - saves closer follow-up fields for a submission
+- [app/api/admin-update-course/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-update-course/route.ts)
+  - saves admin-only corrections to the `course` field for a submission
 - [app/globals.css](/Users/tinasomchit-taylor/Desktop/my-form-app/app/globals.css)
   - global styling, including readable light styling for editable controls
 - [lib/supabase.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/supabase.ts)

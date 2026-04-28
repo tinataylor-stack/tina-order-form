@@ -3,6 +3,16 @@
 import { useMemo, useState } from "react";
 import type { Submission } from "./types";
 
+const ADMIN_COURSE_OPTIONS = [
+  "Claude COWORK - Live Session 60 นาที",
+  "Claude COWORK - Bootcamp 4 สัปดาห์",
+  "คอร์ส Quick Content - แบบ Basic",
+  "คอร์ส Quick Content - แบบ VIP",
+  "Ebook Ai สำหรับเด็ก",
+] as const;
+
+const CUSTOM_COURSE_OPTION = "__custom__";
+
 function InfoRow({
   label,
   value,
@@ -79,6 +89,33 @@ type FollowUpState = {
   outboundCallNote: string;
   disqualified: boolean;
 };
+
+type CourseDraftState = {
+  selectedOption: string;
+  customValue: string;
+};
+
+function createCourseDraft(course: string | null): CourseDraftState {
+  const trimmedCourse = course?.trim() ?? "";
+
+  if (ADMIN_COURSE_OPTIONS.includes(trimmedCourse as (typeof ADMIN_COURSE_OPTIONS)[number])) {
+    return {
+      selectedOption: trimmedCourse,
+      customValue: "",
+    };
+  }
+
+  return {
+    selectedOption: CUSTOM_COURSE_OPTION,
+    customValue: trimmedCourse,
+  };
+}
+
+function getFinalCourseValue(draft: CourseDraftState) {
+  return draft.selectedOption === CUSTOM_COURSE_OPTION
+    ? draft.customValue.trim()
+    : draft.selectedOption.trim();
+}
 
 function FollowUpPanel({
   draft,
@@ -191,6 +228,8 @@ export default function AdminSubmissionsList({
   const [items, setItems] = useState(submissions);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [savingFollowUpId, setSavingFollowUpId] = useState<string | null>(null);
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
+  const [savingCourseId, setSavingCourseId] = useState<string | null>(null);
   const [followUpDrafts, setFollowUpDrafts] = useState<
     Record<string, FollowUpState>
   >(() =>
@@ -206,6 +245,16 @@ export default function AdminSubmissionsList({
     )
   );
   const [saveMessages, setSaveMessages] = useState<Record<string, string>>({});
+  const [courseDrafts, setCourseDrafts] = useState<Record<string, CourseDraftState>>(
+    () =>
+      Object.fromEntries(
+        submissions.map((submission) => [
+          submission.id,
+          createCourseDraft(submission.course),
+        ])
+      )
+  );
+  const [courseMessages, setCourseMessages] = useState<Record<string, string>>({});
 
   const visibleSubmissions = useMemo(() => {
     if (activeTab === "hidden") {
@@ -282,6 +331,116 @@ export default function AdminSubmissionsList({
       ...current,
       [id]: "",
     }));
+  };
+
+  const startEditingCourse = (id: string, course: string | null) => {
+    setEditingCourseId(id);
+    setCourseDrafts((current) => ({
+      ...current,
+      [id]: createCourseDraft(course),
+    }));
+    setCourseMessages((current) => ({
+      ...current,
+      [id]: "",
+    }));
+  };
+
+  const cancelEditingCourse = (id: string, course: string | null) => {
+    setEditingCourseId((current) => (current === id ? null : current));
+    setCourseDrafts((current) => ({
+      ...current,
+      [id]: createCourseDraft(course),
+    }));
+    setCourseMessages((current) => ({
+      ...current,
+      [id]: "",
+    }));
+  };
+
+  const updateCourseDraft = (id: string, next: CourseDraftState) => {
+    setCourseDrafts((current) => ({
+      ...current,
+      [id]: next,
+    }));
+    setCourseMessages((current) => ({
+      ...current,
+      [id]: "",
+    }));
+  };
+
+  const saveCourse = async (id: string) => {
+    const draft = courseDrafts[id];
+
+    if (!draft) {
+      return;
+    }
+
+    const finalCourse = getFinalCourseValue(draft);
+
+    if (!finalCourse) {
+      setCourseMessages((current) => ({
+        ...current,
+        [id]: "กรุณาเลือกหรือกรอกชื่อคอร์ส",
+      }));
+      return;
+    }
+
+    try {
+      setSavingCourseId(id);
+      setCourseMessages((current) => ({
+        ...current,
+        [id]: "",
+      }));
+
+      const res = await fetch("/api/admin-update-course", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          course: finalCourse,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setCourseMessages((current) => ({
+          ...current,
+          [id]: data.error || "บันทึกคอร์สไม่สำเร็จ",
+        }));
+        return;
+      }
+
+      setItems((current) =>
+        current.map((submission) =>
+          submission.id === id
+            ? {
+                ...submission,
+                course: finalCourse,
+              }
+            : submission
+        )
+      );
+
+      setCourseDrafts((current) => ({
+        ...current,
+        [id]: createCourseDraft(finalCourse),
+      }));
+      setCourseMessages((current) => ({
+        ...current,
+        [id]: "บันทึกคอร์สเรียบร้อยแล้ว",
+      }));
+      setEditingCourseId((current) => (current === id ? null : current));
+    } catch {
+      setCourseMessages((current) => ({
+        ...current,
+        [id]: "เกิดข้อผิดพลาดในการบันทึก",
+      }));
+    } finally {
+      setSavingCourseId(null);
+    }
   };
 
   const saveFollowUp = async (id: string) => {
@@ -441,11 +600,15 @@ export default function AdminSubmissionsList({
 
             const isHiddenTab = activeTab === "hidden";
             const isLoading = loadingId === submission.id;
+            const isEditingCourse = editingCourseId === submission.id;
+            const isSavingCourse = savingCourseId === submission.id;
             const followUpDraft = followUpDrafts[submission.id] ?? {
               outboundCalled: submission.outbound_called === true,
               outboundCallNote: submission.outbound_call_note ?? "",
               disqualified: submission.disqualified === true,
             };
+            const courseDraft = courseDrafts[submission.id] ??
+              createCourseDraft(submission.course);
 
             return (
               <details
@@ -533,7 +696,98 @@ export default function AdminSubmissionsList({
                             ข้อมูลทั่วไป
                           </h3>
                           <div className="rounded-xl bg-gray-50 p-4">
-                            <InfoRow label="คอร์สที่สั่งซื้อ" value={submission.course} />
+                            <div className="border-b border-gray-100 py-2">
+                              <div className="grid grid-cols-1 gap-2 md:grid-cols-[220px_1fr] md:gap-4">
+                                <div className="text-sm text-gray-500">คอร์สที่สั่งซื้อ</div>
+                                <div className="space-y-3">
+                                  {isEditingCourse ? (
+                                    <>
+                                      <select
+                                        value={courseDraft.selectedOption}
+                                        onChange={(e) =>
+                                          updateCourseDraft(submission.id, {
+                                            ...courseDraft,
+                                            selectedOption: e.target.value,
+                                          })
+                                        }
+                                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-black"
+                                      >
+                                        {ADMIN_COURSE_OPTIONS.map((option) => (
+                                          <option key={option} value={option}>
+                                            {option}
+                                          </option>
+                                        ))}
+                                        <option value={CUSTOM_COURSE_OPTION}>
+                                          อื่น ๆ
+                                        </option>
+                                      </select>
+
+                                      {courseDraft.selectedOption === CUSTOM_COURSE_OPTION ? (
+                                        <input
+                                          value={courseDraft.customValue}
+                                          onChange={(e) =>
+                                            updateCourseDraft(submission.id, {
+                                              ...courseDraft,
+                                              customValue: e.target.value,
+                                            })
+                                          }
+                                          placeholder="กรอกชื่อคอร์สที่ถูกต้อง"
+                                          className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-black"
+                                        />
+                                      ) : null}
+
+                                      <div className="flex flex-wrap gap-2">
+                                        <button
+                                          type="button"
+                                          disabled={isSavingCourse}
+                                          onClick={() => saveCourse(submission.id)}
+                                          className="rounded-lg bg-black px-3 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                          {isSavingCourse ? "กำลังบันทึก..." : "บันทึก"}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={isSavingCourse}
+                                          onClick={() =>
+                                            cancelEditingCourse(
+                                              submission.id,
+                                              submission.course
+                                            )
+                                          }
+                                          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                          ยกเลิก
+                                        </button>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                      <div className="break-words whitespace-pre-wrap text-sm text-gray-900">
+                                        {submission.course || "-"}
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          startEditingCourse(
+                                            submission.id,
+                                            submission.course
+                                          )
+                                        }
+                                        className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                                      >
+                                        แก้ไขคอร์ส
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  {courseMessages[submission.id] ? (
+                                    <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+                                      {courseMessages[submission.id]}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
                             <InfoRow
                               label="ชื่อผู้รับสินค้า"
                               value={submission.first_name}

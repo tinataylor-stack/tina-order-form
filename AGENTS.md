@@ -29,6 +29,8 @@ This repo is a Thai-language course registration and order intake app that:
 - API routes under `/app/api`
 - Shared helpers under `/lib`
 - Shared admin submission type in `/app/admin/types.ts`
+- Returning buyers can reuse prior details through a phone-based lookup flow in the public form
+- Admin staff can correct the saved `course` value from the expanded submission view in `/admin`
 
 ## Working Rules
 
@@ -87,6 +89,8 @@ Applies to:
 - Validate request input before writing to Supabase.
 - Keep client-safe and server-only concerns separated.
 - Do not hardcode secrets or private URLs.
+- Returning-buyer lookup should only prefill data after explicit user action.
+- Returning-buyer lookup should not reuse old signatures automatically.
 - Be careful with invoice-related data because it affects accounting workflows.
 - Be careful with signature handling because it affects both storage and admin review.
 - If `outbound_called`, `outbound_call_note`, or `disqualified` change, update all connected layers together:
@@ -126,6 +130,7 @@ If a task:
 - changes admin auth
 - introduces a new dependency
 - changes the storage strategy for signatures
+- changes how prior customer data is reused or exposed
 
 pause and propose the smallest safe path before implementing
 
@@ -144,6 +149,8 @@ pause and propose the smallest safe path before implementing
 - [app/api/admin-login/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-login/route.ts)
 - [app/api/admin-hide/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-hide/route.ts)
 - [app/api/admin-follow-up/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-follow-up/route.ts)
+- [app/api/lookup-submission/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/lookup-submission/route.ts)
+- [app/api/admin-update-course/route.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/app/api/admin-update-course/route.ts)
 - [lib/admin-session.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/admin-session.ts)
 - [lib/supabase.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/supabase.ts)
 - [lib/supabase-admin.ts](/Users/tinasomchit-taylor/Desktop/my-form-app/lib/supabase-admin.ts)
