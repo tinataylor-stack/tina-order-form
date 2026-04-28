@@ -9,11 +9,6 @@ export default function FormPage() {
   const router = useRouter();
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
   const startSmartCourseName = "Claude COWORK - Bootcamp 4 สัปดาห์";
-  const startSmartTiers = [
-    "แบบวางแผนให้ 499 บาท",
-    "แบบเอาจริง 2,990 บาท",
-    "แบบใกล้ชิด 29,990 บาท",
-  ];
   const quickContentCourseName = "คอร์ส Quick Content";
   const quickContentTiers = ["แบบ Basic", "แบบ VIP"];
 
@@ -21,7 +16,6 @@ export default function FormPage() {
   const totalSteps = 9;
 
   const [course, setCourse] = useState("");
-  const [startSmartTier, setStartSmartTier] = useState("");
   const [quickContentTier, setQuickContentTier] = useState("");
   const [otherCourse, setOtherCourse] = useState("");
   const [isReturningBuyer, setIsReturningBuyer] = useState("");
@@ -69,22 +63,15 @@ export default function FormPage() {
   const isPersonalInvoice = invoiceType === "personal";
   const isCompanyInvoice = invoiceType === "company";
   const isOtherCourse = course === "other";
-  const isStartSmartSystem = course === startSmartCourseName;
   const isQuickContent = course === quickContentCourseName;
   const finalCourse = isOtherCourse
     ? otherCourse.trim()
-    : isStartSmartSystem && startSmartTier
-      ? `${startSmartCourseName} - ${startSmartTier}`
-      : isQuickContent && quickContentTier
+    : isQuickContent && quickContentTier
         ? `${quickContentCourseName} - ${quickContentTier}`
-      : course;
+        : course;
 
   const handleCourseChange = (value: string) => {
     setCourse(value);
-
-    if (value !== startSmartCourseName) {
-      setStartSmartTier("");
-    }
 
     if (value !== quickContentCourseName) {
       setQuickContentTier("");
@@ -229,11 +216,6 @@ export default function FormPage() {
 
       if (isOtherCourse && !otherCourse.trim()) {
         setMessage("กรุณาระบุคอร์สหรือสินค้าที่สั่งซื้อ");
-        return false;
-      }
-
-      if (isStartSmartSystem && !startSmartTier) {
-        setMessage("กรุณาเลือกระดับของ Claude COWORK - Bootcamp 4 สัปดาห์");
         return false;
       }
 
@@ -511,39 +493,18 @@ export default function FormPage() {
                   </span>
                 </label>
 
-                <label className={radioCardClass(isStartSmartSystem)}>
+                <label className={radioCardClass(course === startSmartCourseName)}>
                   <input
                     type="radio"
                     name="course"
                     value={startSmartCourseName}
-                    checked={isStartSmartSystem}
+                    checked={course === startSmartCourseName}
                     onChange={(e) => handleCourseChange(e.target.value)}
                     className="mt-1"
                   />
-                  <div className="w-full">
-                    <div className="font-medium text-gray-900">{startSmartCourseName}</div>
-                    {isStartSmartSystem && (
-                      <div className="mt-3 space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-3">
-                        <p className="text-sm text-gray-600">เลือกระดับที่ต้องการ</p>
-                        {startSmartTiers.map((tier) => (
-                          <label
-                            key={tier}
-                            className={radioCardClass(startSmartTier === tier)}
-                          >
-                            <input
-                              type="radio"
-                              name="startSmartTier"
-                              value={tier}
-                              checked={startSmartTier === tier}
-                              onChange={(e) => setStartSmartTier(e.target.value)}
-                              className="mt-1"
-                            />
-                            <span className="font-medium text-gray-900">{tier}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <span className="font-medium text-gray-900">
+                    {startSmartCourseName}
+                  </span>
                 </label>
 
                 <label className={radioCardClass(isQuickContent)}>
