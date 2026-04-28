@@ -12,12 +12,12 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
   - 8-step multi-step form
   - course selection, including tiered options for selected products
   - first-step course options currently include:
-    - `Claude COWORK - Live Session`
-    - `Make It Sell In 30 Days | เริ่มมีลูกค้าและขายได้จริงใน 30 วัน`
+    - `Claude COWORK - Live Session 60 นาที`
+    - `Claude COWORK - Bootcamp 4 สัปดาห์`
     - `คอร์ส Quick Content`
     - `Ebook Ai สำหรับเด็ก`
     - `อื่น ๆ โปรดระบุ`
-  - `Make It Sell In 30 Days | เริ่มมีลูกค้าและขายได้จริงใน 30 วัน` currently has these tier options:
+  - `Claude COWORK - Bootcamp 4 สัปดาห์` currently has these tier options:
     - `แบบวางแผนให้ 499 บาท`
     - `แบบเอาจริง 2,990 บาท`
     - `แบบใกล้ชิด 29,990 บาท`

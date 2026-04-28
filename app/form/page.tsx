@@ -9,7 +9,7 @@ export default function FormPage() {
   const router = useRouter();
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
   const startSmartCourseName =
-    'Make It Sell In 30 Days | เริ่มมีลูกค้าและขายได้จริงใน 30 วัน';
+    "Claude COWORK - Bootcamp 4 สัปดาห์";
   const startSmartTiers = [
     "แบบวางแผนให้ 499 บาท",
     "แบบเอาจริง 2,990 บาท",
@@ -108,7 +108,7 @@ export default function FormPage() {
       }
 
       if (isStartSmartSystem && !startSmartTier) {
-        setMessage("กรุณาเลือกระดับของ Make It Sell In 30 Days");
+        setMessage("กรุณาเลือกระดับของ Claude COWORK - Bootcamp 4 สัปดาห์");
         return false;
       }
 
@@ -361,17 +361,21 @@ export default function FormPage() {
               </div>
 
               <div className="space-y-3">
-                <label className={radioCardClass(course === "Claude COWORK - Live Session")}>
+                <label
+                  className={radioCardClass(
+                    course === "Claude COWORK - Live Session 60 นาที"
+                  )}
+                >
                   <input
                     type="radio"
                     name="course"
-                    value="Claude COWORK - Live Session"
-                    checked={course === "Claude COWORK - Live Session"}
+                    value="Claude COWORK - Live Session 60 นาที"
+                    checked={course === "Claude COWORK - Live Session 60 นาที"}
                     onChange={(e) => handleCourseChange(e.target.value)}
                     className="mt-1"
                   />
                   <span className="font-medium text-gray-900">
-                    Claude COWORK - Live Session
+                    Claude COWORK - Live Session 60 นาที
                   </span>
                 </label>
 
