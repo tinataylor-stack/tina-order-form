@@ -13,7 +13,7 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
   - course selection, including tiered options for selected products
   - first-step course options currently include:
     - `Claude COWORK - Live Session 60 นาที`
-    - `Claude COWORK - Bootcamp 4 สัปดาห์`
+    - `Claude COWORK - Workshop 2 วัน`
     - `คอร์ส Quick Content`
     - `Ebook Ai สำหรับเด็ก`
     - `อื่น ๆ โปรดระบุ`

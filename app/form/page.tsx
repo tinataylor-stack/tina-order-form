@@ -8,7 +8,7 @@ import SignatureCanvas from "react-signature-canvas";
 export default function FormPage() {
   const router = useRouter();
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
-  const startSmartCourseName = "Claude COWORK - Bootcamp 4 สัปดาห์";
+  const startSmartCourseName = "Claude COWORK - Workshop 2 วัน";
   const quickContentCourseName = "คอร์ส Quick Content";
   const quickContentTiers = ["แบบ Basic", "แบบ VIP"];
 
