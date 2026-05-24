@@ -14,8 +14,8 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
   - first-step course options currently include:
     - `Claude COWORK - Live Session 60 นาที`
     - `Claude COWORK - Workshop 2 วัน`
+    - `Done for you - Claude COWORK`
     - `คอร์ส Quick Content`
-    - `Ebook Ai สำหรับเด็ก`
     - `อื่น ๆ โปรดระบุ`
   - separate returning-buyer step with phone-based previous-order lookup
   - returning buyers can prefill prior contact, profile, and invoice details from their latest submission

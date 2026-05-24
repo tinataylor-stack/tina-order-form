@@ -507,6 +507,24 @@ export default function FormPage() {
                   </span>
                 </label>
 
+                <label
+                  className={radioCardClass(
+                    course === "Done for you - Claude COWORK"
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="course"
+                    value="Done for you - Claude COWORK"
+                    checked={course === "Done for you - Claude COWORK"}
+                    onChange={(e) => handleCourseChange(e.target.value)}
+                    className="mt-1"
+                  />
+                  <span className="font-medium text-gray-900">
+                    Done for you - Claude COWORK
+                  </span>
+                </label>
+
                 <label className={radioCardClass(isQuickContent)}>
                   <input
                     type="radio"
@@ -540,18 +558,6 @@ export default function FormPage() {
                       </div>
                     )}
                   </div>
-                </label>
-
-                <label className={radioCardClass(course === "Ebook Ai สำหรับเด็ก")}>
-                  <input
-                    type="radio"
-                    name="course"
-                    value="Ebook Ai สำหรับเด็ก"
-                    checked={course === "Ebook Ai สำหรับเด็ก"}
-                    onChange={(e) => handleCourseChange(e.target.value)}
-                    className="mt-1"
-                  />
-                  <span className="font-medium text-gray-900">Ebook Ai สำหรับเด็ก</span>
                 </label>
 
                 <label className={radioCardClass(isOtherCourse)}>
