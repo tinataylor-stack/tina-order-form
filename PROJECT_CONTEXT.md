@@ -12,8 +12,7 @@ Users fill out a multi-step form, confirm terms, provide a signature, and submit
   - 9-step multi-step form
   - course selection, including tiered options for selected products
   - first-step course options currently include:
-    - `Claude COWORK - Live Session 60 นาที`
-    - `Claude COWORK - Workshop 2 วัน`
+    - `คู่มือ Dashboard - Claude COWORK`
     - `Done for you - Claude COWORK`
     - `คอร์ส Quick Content`
     - `อื่น ๆ โปรดระบุ`

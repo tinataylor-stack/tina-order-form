@@ -8,7 +8,7 @@ import SignatureCanvas from "react-signature-canvas";
 export default function FormPage() {
   const router = useRouter();
   const sigCanvasRef = useRef<SignatureCanvas | null>(null);
-  const startSmartCourseName = "Claude COWORK - Workshop 2 วัน";
+  const dashboardGuideCourseName = "คู่มือ Dashboard - Claude COWORK";
   const quickContentCourseName = "คอร์ส Quick Content";
   const quickContentTiers = ["แบบ Basic", "แบบ VIP"];
 
@@ -476,34 +476,18 @@ export default function FormPage() {
 
               <div className="space-y-3">
                 <label
-                  className={radioCardClass(
-                    course === "Claude COWORK - Live Session 60 นาที"
-                  )}
+                  className={radioCardClass(course === dashboardGuideCourseName)}
                 >
                   <input
                     type="radio"
                     name="course"
-                    value="Claude COWORK - Live Session 60 นาที"
-                    checked={course === "Claude COWORK - Live Session 60 นาที"}
+                    value={dashboardGuideCourseName}
+                    checked={course === dashboardGuideCourseName}
                     onChange={(e) => handleCourseChange(e.target.value)}
                     className="mt-1"
                   />
                   <span className="font-medium text-gray-900">
-                    Claude COWORK - Live Session 60 นาที
-                  </span>
-                </label>
-
-                <label className={radioCardClass(course === startSmartCourseName)}>
-                  <input
-                    type="radio"
-                    name="course"
-                    value={startSmartCourseName}
-                    checked={course === startSmartCourseName}
-                    onChange={(e) => handleCourseChange(e.target.value)}
-                    className="mt-1"
-                  />
-                  <span className="font-medium text-gray-900">
-                    {startSmartCourseName}
+                    {dashboardGuideCourseName}
                   </span>
                 </label>
 
